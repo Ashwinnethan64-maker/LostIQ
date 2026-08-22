@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { RouteGuard } from "@/lib/auth/RouteGuard";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { PlusCircle, Search, LayoutDashboard, ArrowRight, ShieldCheck } from "lucide-react";
+import { PlusCircle, Search, LayoutDashboard, ArrowRight, ShieldCheck, Inbox } from "lucide-react";
 import { Report } from "@/types";
 import { getFirstName } from "@/lib/utils";
 
@@ -41,7 +41,7 @@ export default function DashboardPage() {
     <RouteGuard>
       <div className="space-y-10 py-4">
         
-        {/* Editorial Header (Issue 9, 10, 19 Fix: Show First Name, remove raw technical UID) */}
+        {/* Editorial Header */}
         <div className="border-8 border-black bg-white p-6 sm:p-10 shadow-neo-xl space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex items-center gap-2 border-3 border-black bg-[#C4B5FD] text-black px-3.5 py-1 text-xs font-black uppercase shadow-neo-sm">
@@ -87,7 +87,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 4 Bold Metric Blocks (Issues 16, 17, 18 Fix: Explicit label, numeric value, context) */}
+        {/* 4 Bold Metric Blocks */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           
           <div className="neo-card p-5 border-4 border-black bg-[#FF6B6B] text-white">
@@ -133,14 +133,16 @@ export default function DashboardPage() {
               <div className="h-4 bg-[#E2E8F0] w-1/4 mx-auto border-2 border-black" />
             </div>
           ) : reports.length === 0 ? (
-            <div className="border-6 border-black bg-white p-12 text-center space-y-4 shadow-neo-lg">
-              <div className="h-16 w-16 border-4 border-black bg-[#FFD93D] text-black mx-auto flex items-center justify-center font-black text-3xl shadow-neo-sm">
-                0
+            <div className="border-6 border-black bg-white p-10 sm:p-12 text-center space-y-4 shadow-neo-lg">
+              <div className="h-16 w-16 border-4 border-black bg-[#FFD93D] text-black mx-auto flex items-center justify-center shadow-neo-sm">
+                <Inbox className="h-8 w-8 text-black" />
               </div>
-              <h3 className="text-2xl font-black uppercase text-black">NO ACTIVE SUBMISSIONS</h3>
-              <p className="font-bold text-sm text-black/70 max-w-md mx-auto">
-                You haven&apos;t filed any lost or found reports yet. Get started by reporting an item below.
-              </p>
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black uppercase text-black">NO ACTIVE SUBMISSIONS (0)</h3>
+                <p className="font-bold text-sm text-black/70 max-w-md mx-auto">
+                  You haven&apos;t filed any lost or found reports yet under this account.
+                </p>
+              </div>
               <div className="pt-2 flex justify-center gap-3">
                 <Link href="/report/lost" className="neo-button px-5 py-2.5 text-xs bg-[#FF6B6B] text-white border-3 border-black hover:bg-[#FF5252]">
                   REPORT LOST VALUABLE
