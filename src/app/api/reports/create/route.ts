@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
-    // Preserve client-provided user ID (e.g. Firebase Auth UID)
-    const effectiveUserId = body.userId || session.uid || "demo-student-101";
+    // Always enforce verified session UID
+    const effectiveUserId = session.uid;
     const reportId = body.id || `rep-${Date.now()}`;
 
     // Extract manual structured user inputs
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     const manualColor = body.color && body.color.trim() && body.color !== "unspecified" && body.color !== "Unknown" ? body.color.trim() : null;
     const manualMaterial = body.material && body.material.trim() && body.material !== "Unknown" ? body.material.trim() : null;
     const manualDistinctiveFeatures = body.distinctiveFeatures && body.distinctiveFeatures.trim() ? body.distinctiveFeatures.trim() : null;
+    const manualPrivateProof = body.privateOwnershipProof && body.privateOwnershipProof.trim() ? body.privateOwnershipProof.trim() : null;
 
     // Step 1: Execute Gemini Multimodal Analysis with Graceful Fallback
     let rawAiAttributes: AIRawAttributes | null = null;
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
     const newReport: Report = {
       id: reportId,
       reportType: body.reportType,
-      userId: effectiveUserId, // Canonical client/session UID
+      userId: effectiveUserId,
       title: body.title,
       description: body.description,
       category: body.category || "other",
@@ -100,6 +101,7 @@ export async function POST(req: NextRequest) {
       color: manualColor || (finalColor !== "unspecified" ? finalColor : null),
       material: finalMaterial,
       distinctiveFeatures: manualDistinctiveFeatures,
+      privateOwnershipProof: manualPrivateProof,
       imageUrl: body.imageUrl || null,
       location: body.location || { name: "Campus Area", zone: "Central Academic Quad" },
       reportedAt: body.reportedAt || new Date().toISOString(),
@@ -109,13 +111,12 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
-    // Step 4: Persist in Supabase PostgreSQL & Global in-memory store
+    // Step 4: Persist in Supabase PostgreSQL & persistent store
     const savedReport = await createReportInDb(newReport);
-    logger.info("Report created & persisted successfully with authoritative attributes", "ReportsCreateAPI", {
+    logger.info("Report created & persisted successfully with private proof", "ReportsCreateAPI", {
       id: savedReport.id,
       userId: savedReport.userId,
-      brand: savedReport.brand,
-      color: savedReport.color,
+      hasProof: Boolean(savedReport.privateOwnershipProof),
     });
 
     return NextResponse.json({ success: true, report: savedReport }, { status: 201 });

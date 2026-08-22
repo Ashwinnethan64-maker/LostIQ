@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useRouter } from "next/navigation";
 import { ReportType, ItemCategory } from "@/types";
-import { UploadCloud, Sparkles, AlertCircle, ArrowRight, X } from "lucide-react";
+import { UploadCloud, Sparkles, AlertCircle, ArrowRight, X, Lock, ShieldCheck } from "lucide-react";
 import { uploadReportImage, optimizeImageClientSide, validateImageUpload } from "@/lib/firebase/storage";
 import { logger } from "@/lib/logger";
 
@@ -72,7 +72,6 @@ export function ReportForm({ initialType }: ReportFormProps) {
   const { user, getFreshToken } = useAuth();
   const router = useRouter();
 
-  // Mode is locked to dedicated route's type (LOST on /report/lost, FOUND on /report/found)
   const reportType: ReportType = initialType;
   const isLost = reportType === "LOST";
 
@@ -86,6 +85,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
   const [color, setColor] = useState("Black");
   const [material, setMaterial] = useState("Plastic");
   const [distinctiveFeatures, setDistinctiveFeatures] = useState("");
+  const [privateOwnershipProof, setPrivateOwnershipProof] = useState("");
 
   const [locationName, setLocationName] = useState("");
   const [selectedZone, setSelectedZone] = useState(CAMPUS_ZONES[0]);
@@ -100,7 +100,6 @@ export function ReportForm({ initialType }: ReportFormProps) {
   const [submissionStage, setSubmissionStage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Instant Client-Side Image Selection & Validation
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -120,7 +119,6 @@ export function ReportForm({ initialType }: ReportFormProps) {
       setImageFile(file);
       setImageSizeFormatted((file.size / (1024 * 1024)).toFixed(2) + " MB");
       
-      // Convert to instant Base64 data URL for local & persistence preview
       const reader = new FileReader();
       reader.onload = () => {
         setImagePreview(reader.result as string);
@@ -137,11 +135,16 @@ export function ReportForm({ initialType }: ReportFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (submitting) return; // Prevent duplicate clicks
+    if (submitting) return;
     setErrorMessage(null);
 
     if (!title.trim() || !description.trim() || !locationName.trim()) {
       setErrorMessage("Please fill in Title, Description, and Specific Location.");
+      return;
+    }
+
+    if (isLost && !privateOwnershipProof.trim()) {
+      setErrorMessage("Please provide Private Ownership Proof to protect your valuable.");
       return;
     }
 
@@ -152,7 +155,6 @@ export function ReportForm({ initialType }: ReportFormProps) {
       const tempReportId = `rep-${Date.now()}`;
       const effectiveUserId = user?.id || "demo-student-101";
 
-      // Optimize and upload image if attached
       if (imageFile) {
         setSubmissionStage("OPTIMIZING & UPLOADING PHOTO...");
         const optimizedBlob = await optimizeImageClientSide(imageFile);
@@ -180,6 +182,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
         color: color !== "Unknown" ? color : undefined,
         material: material !== "Other" ? material : undefined,
         distinctiveFeatures: distinctiveFeatures.trim() || undefined,
+        privateOwnershipProof: isLost ? privateOwnershipProof.trim() : undefined,
         imageUrl: uploadedImageUrl,
         location: {
           name: locationName.trim(),
@@ -206,7 +209,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
         throw new Error(data.error || "Failed to submit report");
       }
 
-      logger.info("Report created successfully with structured attributes", "ReportForm", { id: data.report.id });
+      logger.info("Report created successfully with structured attributes & private proof", "ReportForm", { id: data.report.id });
       router.push(`/reports/${data.report.id}`);
     } catch (err: any) {
       logger.error("Submission error", "ReportForm", err);
@@ -220,7 +223,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
       isLost ? "border-t-[#FF6B6B]" : "border-t-[#FFD93D]"
     }`}>
       
-      {/* Dedicated mode banner matching route identity */}
+      {/* Mode Banner */}
       <div className={`p-4 sm:p-5 border-b-6 border-black font-black text-xs sm:text-sm uppercase flex items-center justify-between gap-3 ${
         isLost ? "bg-[#FF6B6B] text-white" : "bg-[#FFD93D] text-black"
       }`}>
@@ -251,10 +254,8 @@ export function ReportForm({ initialType }: ReportFormProps) {
         </div>
       </div>
 
-      {/* Main Single Form Container */}
       <form onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-8">
         
-        {/* Error Alert */}
         {errorMessage && (
           <div className="border-4 border-black bg-[#FF6B6B] text-white p-4 font-black text-xs uppercase flex items-center gap-3 shadow-neo-sm">
             <AlertCircle className="h-5 w-5 flex-shrink-0" />
@@ -262,7 +263,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
           </div>
         )}
 
-        {/* SECTION 01: ITEM PHOTO UPLOADER */}
+        {/* SECTION 01: PHOTO */}
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b-2 border-black pb-1">
             <label className="text-xs font-black uppercase tracking-widest text-black flex items-center gap-2">
@@ -315,7 +316,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
           </div>
         </div>
 
-        {/* SECTION 02: ITEM CORE DETAILS */}
+        {/* SECTION 02: IDENTIFICATION */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 border-b-2 border-black pb-1">
             <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-black">02</span>
@@ -357,7 +358,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
             </div>
           </div>
 
-          {/* Structured Attributes (Brand, Model, Color, Material) */}
+          {/* Structured Attributes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
             <div className="space-y-1.5">
               <label className="text-xs font-black uppercase tracking-wider text-black">
@@ -492,16 +493,19 @@ export function ReportForm({ initialType }: ReportFormProps) {
           </div>
         </div>
 
-        {/* SECTION 04: DESCRIPTION & DISTINCTIVE FEATURES */}
+        {/* SECTION 04: DESCRIPTION & PRIVATE OWNERSHIP PROOF */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 border-b-2 border-black pb-1">
             <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-black">04</span>
             <label className="text-xs font-black uppercase tracking-widest text-black">
-              DISTINGUISHING FEATURES &amp; NOTES *
+              DISTINGUISHING FEATURES &amp; PRIVATE PROOF *
             </label>
           </div>
           
           <div className="space-y-1.5">
+            <label className="text-xs font-black uppercase tracking-wider text-black">
+              PUBLIC DESCRIPTION / SUMMARY *
+            </label>
             <textarea
               required
               rows={3}
@@ -519,17 +523,44 @@ export function ReportForm({ initialType }: ReportFormProps) {
 
           <div className="space-y-1.5">
             <label className="text-xs font-black uppercase tracking-wider text-black">
-              HIDDEN IDENTIFIERS / PRIVATE MARKS / UNIQUE SCRATCHES (USED FOR VERIFICATION)
+              VISIBLE DISTINGUISHING FEATURES (OPTIONAL)
             </label>
             <input
               type="text"
-              placeholder="E.G. SCRATCH ON BOTTOM RIGHT, STICKER ON REAR, ENGRAVED INITIALS..."
+              placeholder="E.G. STICKER ON REAR, WEAR ON STRAP..."
               value={distinctiveFeatures}
               onChange={(e) => setDistinctiveFeatures(e.target.value)}
               disabled={submitting}
               className="neo-input w-full px-4 py-2.5 text-xs font-black uppercase placeholder:text-black/40"
             />
           </div>
+
+          {/* Dedicated Zero-Knowledge Private Ownership Proof for LOST reports */}
+          {isLost && (
+            <div className="border-4 border-black bg-[#FFD93D]/30 p-4 space-y-2 shadow-neo-sm">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+                  <Lock className="h-4 w-4 text-[#FF6B6B]" />
+                  <span>PRIVATE OWNERSHIP PROOF (ZERO-KNOWLEDGE VERIFIER) *</span>
+                </label>
+                <span className="text-[10px] font-black uppercase bg-black text-white px-2 py-0.5">
+                  NEVER PUBLIC
+                </span>
+              </div>
+              <p className="text-[11px] font-bold text-black/75">
+                🔒 Specify private identifiers (hidden scratch, serial fragment, lockscreen wallpaper, or pocket contents). When recovering your item, you will be asked to confirm these details.
+              </p>
+              <textarea
+                required
+                rows={2}
+                placeholder="E.G. SMALL SCRATCH NEAR 3 O'CLOCK POSITION, BLUE KEYCHAIN INSIDE FRONT POCKET..."
+                value={privateOwnershipProof}
+                onChange={(e) => setPrivateOwnershipProof(e.target.value)}
+                disabled={submitting}
+                className="neo-input w-full px-4 py-2.5 text-xs font-black uppercase placeholder:text-black/40 bg-white"
+              />
+            </div>
+          )}
         </div>
 
         {/* SECTION 05: SUBMISSION */}

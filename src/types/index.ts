@@ -1,6 +1,6 @@
 export type ReportType = "LOST" | "FOUND";
 
-export type ReportStatus = "OPEN" | "MATCHED" | "CLAIMED" | "RESOLVED" | "CLOSED";
+export type ReportStatus = "OPEN" | "MATCHED" | "CLAIMED" | "RESOLVED" | "RECOVERED" | "CLOSED";
 
 export type ItemCategory =
   | "electronics"
@@ -50,6 +50,7 @@ export interface Report {
   color?: string | null;
   material?: string | null;
   distinctiveFeatures?: string | null;
+  privateOwnershipProof?: string | null; // Protected zero-knowledge owner proof
   imageUrl?: string | null;
   location: LocationData;
   reportedAt: string;
@@ -86,24 +87,87 @@ export interface MatchCandidate {
   targetReport: Report;
   scores: MatchScores;
   explanation: string;
-  status: "ACTIVE" | "DISMISSED" | "VERIFIED";
+  status: "ACTIVE" | "DISMISSED" | "VERIFIED" | "RECOVERED";
   createdAt: string;
   updatedAt: string;
 }
 
+export type ClaimStatus =
+  | "PENDING_VERIFICATION"
+  | "VERIFIED"
+  | "PENDING_HANDOVER"
+  | "FINDER_CONFIRMED"
+  | "COMPLETED"
+  | "REJECTED"
+  | "EXPIRED"
+  | "CANCELLED";
+
 export interface Claim {
   id: string;
-  reportId: string;           // Target report ID (typically the FOUND item being claimed)
-  lostReportId?: string | null; // The claimant's originating LOST report ID
-  claimantId: string;         // The authenticated user who created the LOST report
-  finderId?: string | null;   // The user who created the FOUND report
-  proofDetails: string;       // Private ownership verification details
+  reportId: string;             // Target FOUND report ID
+  lostReportId: string;         // Originating LOST report ID
+  matchId?: string | null;
+  claimantId: string;           // Authenticated user who created the LOST report
+  finderId: string;             // User who created the FOUND report
+  proofDetails: string;         // Submitted verification answers
   proofImageUrl?: string | null;
-  status: "PENDING" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "COMPLETED" | "CANCELLED";
+  verificationAttempts?: number;
+  verificationStatus?: "PENDING" | "PASSED" | "FAILED" | "LOCKED";
+  handoverStatus?: "NONE" | "FINDER_CONFIRMED" | "COMPLETED";
+  status: ClaimStatus;
   reviewerId?: string | null;
   reviewNote?: string | null;
+  verifiedAt?: string | null;
+  finderConfirmedAt?: string | null;
+  ownerReceivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RecoveryToken {
+  id: string;
+  claimId: string;
+  token: string;                // Cryptographic opaque token
+  tokenHash: string;
+  expiresAt: string;
+  usedAt?: string | null;
+  createdAt: string;
+}
+
+export type RecoveryEventType =
+  | "CLAIM_CREATED"
+  | "OWNER_VERIFICATION_STARTED"
+  | "OWNER_VERIFICATION_PASSED"
+  | "OWNER_VERIFICATION_FAILED"
+  | "RECOVERY_PASS_CREATED"
+  | "RECOVERY_PASS_USED"
+  | "FINDER_CONFIRMED"
+  | "OWNER_CONFIRMED"
+  | "RECOVERY_COMPLETED"
+  | "CLAIM_CANCELLED"
+  | "RECOVERY_EXPIRED";
+
+export interface RecoveryEvent {
+  id: string;
+  claimId: string;
+  eventType: RecoveryEventType;
+  actorUserId: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface RecoveryReceipt {
+  receiptId: string; // LIQ-XXXXXX format
+  claimId: string;
+  itemTitle: string;
+  lostReportId: string;
+  foundReportId: string;
+  matchScore: number;
+  ownerVerified: boolean;
+  finderConfirmed: boolean;
+  ownerReceiptConfirmed: boolean;
+  recoveredAt: string;
+  status: "RECOVERED";
 }
 
 export interface DashboardStats {
@@ -112,4 +176,5 @@ export interface DashboardStats {
   foundReports: number;
   potentialMatches: number;
   resolvedReports: number;
+  recoveryRequests: number;
 }

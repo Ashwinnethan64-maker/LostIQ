@@ -1,0 +1,20 @@
+[
+  {
+    "id": "tok-1787421665859",
+    "claimId": "claim-1787421665849",
+    "token": "LQ-5BCB5F38A0938D4132D69A8278C65EFE5F9FDAA92F48A38A",
+    "tokenHash": "60ccef0571ae02ef0d2eeb7e9586a1e69676b07007cec8aa3d29e778886ce47a",
+    "expiresAt": "2026-08-22T18:11:05.859Z",
+    "createdAt": "2026-08-22T18:01:05.859Z",
+    "usedAt": "2026-08-22T18:01:05.867Z"
+  },
+  {
+    "id": "tok-1787421686213",
+    "claimId": "claim-1787421686206",
+    "token": "LQ-BF4781CE3B89B55B672340C577A987E8299CC946B967E677",
+    "tokenHash": "563b329fcc4fc807408360dfe9c05a687d9785eb8aad3475dfbbb82a76e875ac",
+    "expiresAt": "2026-08-22T18:11:26.213Z",
+    "createdAt": "2026-08-22T18:01:26.213Z",
+    "usedAt": "2026-08-22T18:01:26.218Z"
+  }
+]

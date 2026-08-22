@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { Report, UserProfile, Claim } from "@/types";
+import { Report, UserProfile, Claim, RecoveryToken, RecoveryEvent } from "@/types";
 import { logger } from "../logger";
 
 const isTestEnv = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
@@ -8,6 +8,8 @@ const DATA_DIR = path.join(process.cwd(), isTestEnv ? ".data_test" : ".data");
 const REPORTS_FILE = path.join(DATA_DIR, "reports.json");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 const CLAIMS_FILE = path.join(DATA_DIR, "claims.json");
+const TOKENS_FILE = path.join(DATA_DIR, "recovery_tokens.json");
+const EVENTS_FILE = path.join(DATA_DIR, "recovery_events.json");
 
 function ensureDirectoryExists() {
   try {
@@ -82,5 +84,49 @@ export function saveClaimsToFile(claims: Claim[]) {
     fs.writeFileSync(CLAIMS_FILE, JSON.stringify(claims, null, 2), "utf-8");
   } catch (err) {
     logger.warn("Failed to write claims to file cache", "FilePersistence", err);
+  }
+}
+
+export function loadTokensFromFile(): RecoveryToken[] {
+  ensureDirectoryExists();
+  try {
+    if (fs.existsSync(TOKENS_FILE)) {
+      const data = fs.readFileSync(TOKENS_FILE, "utf-8");
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    logger.warn("Failed to load recovery tokens from file cache", "FilePersistence", err);
+  }
+  return [];
+}
+
+export function saveTokensToFile(tokens: RecoveryToken[]) {
+  ensureDirectoryExists();
+  try {
+    fs.writeFileSync(TOKENS_FILE, JSON.stringify(tokens, null, 2), "utf-8");
+  } catch (err) {
+    logger.warn("Failed to write recovery tokens to file cache", "FilePersistence", err);
+  }
+}
+
+export function loadEventsFromFile(): RecoveryEvent[] {
+  ensureDirectoryExists();
+  try {
+    if (fs.existsSync(EVENTS_FILE)) {
+      const data = fs.readFileSync(EVENTS_FILE, "utf-8");
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    logger.warn("Failed to load recovery events from file cache", "FilePersistence", err);
+  }
+  return [];
+}
+
+export function saveEventsToFile(events: RecoveryEvent[]) {
+  ensureDirectoryExists();
+  try {
+    fs.writeFileSync(EVENTS_FILE, JSON.stringify(events, null, 2), "utf-8");
+  } catch (err) {
+    logger.warn("Failed to write recovery events to file cache", "FilePersistence", err);
   }
 }

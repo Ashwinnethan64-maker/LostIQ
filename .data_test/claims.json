@@ -9,5 +9,39 @@
     "status": "PENDING",
     "createdAt": "2026-08-22T17:55:28.726Z",
     "updatedAt": "2026-08-22T17:55:28.726Z"
+  },
+  {
+    "id": "claim-1787421665849",
+    "reportId": "rep-found-1787421665824",
+    "lostReportId": "rep-lost-1787421665824",
+    "claimantId": "owner-uid-1787421665816",
+    "finderId": "finder-uid-1787421665816",
+    "proofDetails": "scratch near 3 o'clock position on bezel",
+    "verificationAttempts": 1,
+    "verificationStatus": "PASSED",
+    "handoverStatus": "COMPLETED",
+    "status": "COMPLETED",
+    "verifiedAt": "2026-08-22T18:01:05.850Z",
+    "createdAt": "2026-08-22T18:01:05.850Z",
+    "updatedAt": "2026-08-22T18:01:05.874Z",
+    "finderConfirmedAt": "2026-08-22T18:01:05.869Z",
+    "ownerReceivedAt": "2026-08-22T18:01:05.874Z"
+  },
+  {
+    "id": "claim-1787421686206",
+    "reportId": "rep-found-1787421686183",
+    "lostReportId": "rep-lost-1787421686183",
+    "claimantId": "owner-uid-1787421686176",
+    "finderId": "finder-uid-1787421686176",
+    "proofDetails": "scratch near 3 o'clock position on bezel",
+    "verificationAttempts": 1,
+    "verificationStatus": "PASSED",
+    "handoverStatus": "COMPLETED",
+    "status": "COMPLETED",
+    "verifiedAt": "2026-08-22T18:01:26.207Z",
+    "createdAt": "2026-08-22T18:01:26.207Z",
+    "updatedAt": "2026-08-22T18:01:26.223Z",
+    "finderConfirmedAt": "2026-08-22T18:01:26.220Z",
+    "ownerReceivedAt": "2026-08-22T18:01:26.223Z"
   }
 ]

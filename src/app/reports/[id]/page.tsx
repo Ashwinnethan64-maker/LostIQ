@@ -14,7 +14,7 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
   const [matches, setMatches] = useState<MatchCandidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
-  const [claimTarget, setClaimTarget] = useState<{ id: string; title: string } | null>(null);
+  const [claimTarget, setClaimTarget] = useState<{ id: string; lostId?: string; title: string } | null>(null);
 
   useEffect(() => {
     async function fetchReportAndMatches() {
@@ -166,7 +166,7 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
             </p>
           </div>
 
-          {/* Structured Attributes Panel with Transparent Origin (User Provided vs AI) */}
+          {/* Structured Attributes Panel */}
           <div className="border-4 border-black bg-[#FFD93D] text-black p-5 space-y-3 shadow-neo-sm">
             <div className="flex items-center justify-between font-black text-xs uppercase border-b-2 border-black pb-1.5">
               <div className="flex items-center gap-2">
@@ -260,10 +260,6 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
         ) : (
           <div className="space-y-6">
             {matches.map((candidate) => {
-              // Exact Business Rule:
-              // For every match pair (LOST report <-> FOUND report):
-              // - lostReport.userId = OWNER CANDIDATE (Only user who can submit ownership claim)
-              // - foundReport.userId = FINDER (Waiting for owner)
               const lostReportUser = isLost ? report.userId : candidate.targetReport.userId;
               const foundReportUser = isFound ? report.userId : candidate.targetReport.userId;
 
@@ -297,10 +293,9 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
                     <MatchBadge score={candidate.scores.overall} size="lg" />
                   </div>
 
-                  {/* 2-Col Breakdown: Evidence Rationale & 5-Signal Progress Meters */}
+                  {/* 2-Col Breakdown */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     
-                    {/* Left: Evidence-backed Rationale */}
                     <div className="lg:col-span-6 space-y-3">
                       <div className="border-4 border-black bg-[#C4B5FD] text-black p-5 shadow-neo-sm space-y-2">
                         <h4 className="text-xs font-black uppercase tracking-widest text-black flex items-center gap-1.5">
@@ -319,13 +314,12 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
                       </div>
                     </div>
 
-                    {/* Right: 5-Signal Meter Bars */}
                     <div className="lg:col-span-6">
                       <MatchScoreBar scores={candidate.scores} />
                     </div>
                   </div>
 
-                  {/* Bottom Action Footer: Context-Aware Authorization at Source */}
+                  {/* Bottom Action Footer */}
                   <div className="pt-4 border-t-3 border-black flex flex-wrap items-center justify-between gap-3">
                     <Link
                       href={`/reports/${candidate.targetReport.id}`}
@@ -339,7 +333,8 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
                         onClick={() => {
                           const targetFoundId = isFound ? report.id : candidate.targetReport.id;
                           const targetFoundTitle = isFound ? report.title : candidate.targetReport.title;
-                          setClaimTarget({ id: targetFoundId, title: targetFoundTitle });
+                          const originatingLostId = isLost ? report.id : candidate.targetReport.id;
+                          setClaimTarget({ id: targetFoundId, lostId: originatingLostId, title: targetFoundTitle });
                           setIsClaimModalOpen(true);
                         }}
                         className="neo-button px-5 py-2 text-xs bg-[#FF6B6B] text-white border-3 border-black hover:bg-[#FF5252] shadow-neo-sm font-black"
@@ -365,10 +360,11 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
         )}
       </div>
 
-      {/* Ownership Claim Dialog: Only mounted for authorized claimant */}
+      {/* Ownership Claim Dialog */}
       {claimTarget && (
         <ClaimModal
           reportId={claimTarget.id}
+          lostReportId={claimTarget.lostId}
           reportTitle={claimTarget.title}
           isOpen={isClaimModalOpen}
           onClose={() => {

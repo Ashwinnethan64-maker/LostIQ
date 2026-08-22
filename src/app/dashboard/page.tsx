@@ -4,41 +4,64 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { RouteGuard } from "@/lib/auth/RouteGuard";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { PlusCircle, Search, LayoutDashboard, ArrowRight, ShieldCheck, Inbox, Loader2 } from "lucide-react";
-import { Report } from "@/types";
+import {
+  PlusCircle,
+  Search,
+  LayoutDashboard,
+  ArrowRight,
+  ShieldCheck,
+  Inbox,
+  Loader2,
+  QrCode,
+  CheckCircle2,
+  Clock,
+  Sparkles,
+} from "lucide-react";
+import { Report, Claim } from "@/types";
 import { getFirstName } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
+  const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchUserReports() {
+    async function fetchUserData() {
       if (!user) return;
       setLoading(true);
       try {
-        const res = await fetch(`/api/reports?userId=${encodeURIComponent(user.id)}`, {
-          cache: "no-store",
-        });
-        const data = await res.json();
-        if (data.success) {
-          setReports(data.reports || []);
+        const [repRes, claimRes] = await Promise.all([
+          fetch(`/api/reports?userId=${encodeURIComponent(user.id)}`, { cache: "no-store" }),
+          fetch(`/api/claims?userId=${encodeURIComponent(user.id)}`, { cache: "no-store" }),
+        ]);
+
+        const repData = await repRes.json();
+        if (repData.success) {
+          setReports(repData.reports || []);
+        }
+
+        const claimData = await claimRes.json();
+        if (claimData.success) {
+          setClaims(claimData.claims || []);
         }
       } catch (err) {
-        console.error("Failed to fetch user reports", err);
+        console.error("Failed to fetch dashboard data", err);
       } finally {
         setLoading(false);
       }
     }
 
     if (user) {
-      fetchUserReports();
+      fetchUserData();
     }
   }, [user]);
 
   const lostCount = reports.filter((r) => r.reportType === "LOST").length;
   const foundCount = reports.filter((r) => r.reportType === "FOUND").length;
+  const recoveredCount = reports.filter((r) => r.status === "RECOVERED").length;
+  const pendingRecoveryCount = claims.filter((c) => c.status !== "COMPLETED" && c.status !== "CANCELLED").length;
+
   const firstName = getFirstName(user);
   const isOverallLoading = authLoading || loading;
 
@@ -63,7 +86,7 @@ export default function DashboardPage() {
             LOSTIQ <span className="bg-black text-white px-2 py-0.5 inline-block -rotate-1">CONTROL</span> DESK.
           </h1>
           <p className="font-bold text-sm sm:text-base text-black/80 max-w-xl">
-            Welcome back, {firstName}. Manage your submissions, monitor active AI matches, and process recovery claims.
+            Welcome back, {firstName}. Manage your active cases, track AI-matched items, generate QR recovery passes, and confirm handovers.
           </p>
 
           {/* Quick Action Buttons */}
@@ -92,7 +115,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 4 Bold Metric Blocks with Loading Skeleton Protection (No Flash of Zero) */}
+        {/* 4 Bold Metric Blocks */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           
           <div className="neo-card p-5 border-4 border-black bg-[#FF6B6B] text-white">
@@ -112,26 +135,86 @@ export default function DashboardPage() {
           </div>
 
           <div className="neo-card p-5 border-4 border-black bg-[#C4B5FD] text-black">
-            <div className="text-xs font-black uppercase tracking-widest text-black/80">TOTAL SUBMISSIONS</div>
+            <div className="text-xs font-black uppercase tracking-widest text-black/80">ACTIVE RECOVERIES</div>
             <div className="text-4xl sm:text-5xl font-black mt-2">
-              {isOverallLoading ? <Loader2 className="h-8 w-8 animate-spin my-1" /> : reports.length}
+              {isOverallLoading ? <Loader2 className="h-8 w-8 animate-spin my-1" /> : pendingRecoveryCount}
             </div>
-            <div className="text-[10px] font-bold uppercase mt-1 text-black/80">FILED UNDER YOUR ACCOUNT</div>
+            <div className="text-[10px] font-bold uppercase mt-1 text-black/80">HANDOVER PASSES IN FLIGHT</div>
           </div>
 
           <div className="neo-card p-5 border-4 border-black bg-white text-black">
-            <div className="text-xs font-black uppercase tracking-widest text-black/70">AI MATCH MONITOR</div>
-            <div className="text-4xl sm:text-5xl font-black mt-2 text-[#FF6B6B]">ACTIVE</div>
-            <div className="text-[10px] font-bold uppercase mt-1 text-black/70">5-SIGNAL MULTIMODAL RADAR</div>
+            <div className="text-xs font-black uppercase tracking-widest text-black/70">RECOVERED ITEMS</div>
+            <div className="text-4xl sm:text-5xl font-black mt-2 text-[#FF6B6B]">
+              {isOverallLoading ? <Loader2 className="h-8 w-8 animate-spin my-1" /> : recoveredCount}
+            </div>
+            <div className="text-[10px] font-bold uppercase mt-1 text-black/70">CONFIRMED HANDOVERS</div>
           </div>
 
         </div>
+
+        {/* Active Recovery Passes Section (if any claims active) */}
+        {claims.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b-4 border-black pb-2">
+              <h2 className="text-2xl font-black uppercase tracking-tight text-black flex items-center gap-2">
+                <QrCode className="h-6 w-6 text-[#FF6B6B]" />
+                <span>ACTIVE RECOVERY CLAIMS &amp; HANDOVERS ({claims.length})</span>
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {claims.map((claim) => {
+                const isOwner = claim.claimantId.toLowerCase() === user?.id?.toLowerCase();
+                return (
+                  <div
+                    key={claim.id}
+                    className="border-4 border-black bg-white p-5 shadow-neo space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="neo-sticker bg-[#FFD93D] text-black text-[10px]">
+                        {isOwner ? "YOU ARE OWNER" : "YOU ARE FINDER"}
+                      </span>
+                      <span className={`text-xs font-black uppercase px-2 py-0.5 border-2 border-black ${
+                        claim.status === "COMPLETED" ? "bg-black text-white" : "bg-[#C4B5FD] text-black"
+                      }`}>
+                        STATUS: {claim.status}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="font-black text-base text-black">
+                        CLAIM REF: #{claim.id.slice(-6).toUpperCase()}
+                      </div>
+                      <p className="text-xs font-bold text-black/70">
+                        {isOwner
+                          ? "Ownership verified. Present your one-time recovery pass QR to the finder to confirm handover."
+                          : "Verified owner claim received. Scan the owner's recovery pass to confirm physical handover."}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t-2 border-black flex justify-between items-center">
+                      <span className="text-[10px] font-bold uppercase text-black/60">
+                        {new Date(claim.createdAt).toLocaleDateString()}
+                      </span>
+                      <Link
+                        href={`/recovery/${claim.id}`}
+                        className="neo-button px-4 py-1.5 text-xs bg-[#FF6B6B] text-white border-2 border-black hover:bg-[#FF5252] font-black"
+                      >
+                        RECOVERY HUB →
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* User Activity & Cases Feed */}
         <div className="space-y-6">
           <div className="flex items-center justify-between border-b-4 border-black pb-2">
             <h2 className="text-2xl font-black uppercase tracking-tight text-black">
-              YOUR ACTIVE SUBMISSIONS {isOverallLoading ? "" : `(${reports.length})`}
+              YOUR SUBMITTED REPORTS {isOverallLoading ? "" : `(${reports.length})`}
             </h2>
             <span className="text-xs font-bold uppercase tracking-widest text-black/70">
               CLICK TO VIEW MATCH CONFIDENCE
@@ -186,6 +269,11 @@ export default function DashboardPage() {
                         <span className="text-xs font-bold uppercase text-black/70">
                           {rep.location?.name} • {new Date(rep.reportedAt).toLocaleDateString()}
                         </span>
+                        {rep.status === "RECOVERED" && (
+                          <span className="neo-sticker bg-black text-white text-[10px]">
+                            ✓ RECOVERED
+                          </span>
+                        )}
                       </div>
                       <h3 className="font-black text-lg text-black">{rep.title}</h3>
                       <p className="text-xs font-bold text-black/80 max-w-xl line-clamp-1">

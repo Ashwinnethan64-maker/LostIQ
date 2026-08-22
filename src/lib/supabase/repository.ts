@@ -1,4 +1,15 @@
-import { Report, ReportType, ReportStatus, UserProfile, Claim } from "@/types";
+import {
+  Report,
+  ReportType,
+  ReportStatus,
+  UserProfile,
+  Claim,
+  ClaimStatus,
+  RecoveryToken,
+  RecoveryEvent,
+  RecoveryEventType,
+  RecoveryReceipt,
+} from "@/types";
 import { getSupabaseClient } from "./client";
 import { logger } from "../logger";
 import {
@@ -8,6 +19,10 @@ import {
   saveUsersToFile,
   loadClaimsFromFile,
   saveClaimsToFile,
+  loadTokensFromFile,
+  saveTokensToFile,
+  loadEventsFromFile,
+  saveEventsToFile,
 } from "../db/persistence";
 
 // Persistent store across Next.js dev server hot-reloads and API route requests
@@ -15,42 +30,51 @@ const globalForReports = globalThis as unknown as {
   localReportsStore?: Map<string, Report>;
   localUsersStore?: Map<string, UserProfile>;
   localClaimsStore?: Map<string, Claim>;
+  localTokensStore?: Map<string, RecoveryToken>;
+  localEventsStore?: Map<string, RecoveryEvent>;
 };
 
 const localReportsStore = globalForReports.localReportsStore || new Map<string, Report>();
 const localUsersStore = globalForReports.localUsersStore || new Map<string, UserProfile>();
 const localClaimsStore = globalForReports.localClaimsStore || new Map<string, Claim>();
+const localTokensStore = globalForReports.localTokensStore || new Map<string, RecoveryToken>();
+const localEventsStore = globalForReports.localEventsStore || new Map<string, RecoveryEvent>();
 
 if (!globalForReports.localReportsStore) globalForReports.localReportsStore = localReportsStore;
 if (!globalForReports.localUsersStore) globalForReports.localUsersStore = localUsersStore;
 if (!globalForReports.localClaimsStore) globalForReports.localClaimsStore = localClaimsStore;
+if (!globalForReports.localTokensStore) globalForReports.localTokensStore = localTokensStore;
+if (!globalForReports.localEventsStore) globalForReports.localEventsStore = localEventsStore;
 
 function initStoreFromPersistence() {
   if (localReportsStore.size === 0) {
     const savedReports = loadReportsFromFile();
-    for (const r of savedReports) {
-      localReportsStore.set(r.id, r);
-    }
+    for (const r of savedReports) localReportsStore.set(r.id, r);
   }
 
   if (localUsersStore.size === 0) {
     const savedUsers = loadUsersFromFile();
-    for (const u of savedUsers) {
-      localUsersStore.set(u.id, u);
-    }
+    for (const u of savedUsers) localUsersStore.set(u.id, u);
   }
 
   if (localClaimsStore.size === 0) {
     const savedClaims = loadClaimsFromFile();
-    for (const c of savedClaims) {
-      localClaimsStore.set(c.id, c);
-    }
+    for (const c of savedClaims) localClaimsStore.set(c.id, c);
+  }
+
+  if (localTokensStore.size === 0) {
+    const savedTokens = loadTokensFromFile();
+    for (const t of savedTokens) localTokensStore.set(t.id, t);
+  }
+
+  if (localEventsStore.size === 0) {
+    const savedEvents = loadEventsFromFile();
+    for (const e of savedEvents) localEventsStore.set(e.id, e);
   }
 }
 
 initStoreFromPersistence();
 
-// Helper to map Supabase database row to Report TypeScript entity
 function mapDbRowToReport(row: any): Report {
   return {
     id: row.id,
@@ -64,6 +88,7 @@ function mapDbRowToReport(row: any): Report {
     color: row.color || undefined,
     material: row.material || undefined,
     distinctiveFeatures: row.distinctive_features || undefined,
+    privateOwnershipProof: row.private_ownership_proof || undefined,
     imageUrl: row.image_url || null,
     location: typeof row.location === "string" ? JSON.parse(row.location) : row.location,
     reportedAt: row.reported_at,
@@ -74,7 +99,7 @@ function mapDbRowToReport(row: any): Report {
   };
 }
 
-// 1. Sync / Upsert User Profile using Firebase Auth UID
+// 1. Sync User Profile
 export async function syncUserProfileInDb(profile: UserProfile): Promise<UserProfile> {
   const supabase = getSupabaseClient();
   localUsersStore.set(profile.id, profile);
@@ -82,22 +107,16 @@ export async function syncUserProfileInDb(profile: UserProfile): Promise<UserPro
 
   if (supabase) {
     try {
-      const { error } = await supabase.from("users").upsert({
-        id: profile.id, // Canonical Firebase Auth UID
+      await supabase.from("users").upsert({
+        id: profile.id,
         email: profile.email,
         display_name: profile.displayName,
         photo_url: profile.photoURL || null,
         role: profile.role || "user",
         updated_at: new Date().toISOString(),
       });
-
-      if (error) {
-        logger.warn("Supabase user sync error. Stored safely in persistent layer.", "SupabaseDb", error.message);
-      } else {
-        logger.info("User profile synced in Supabase PostgreSQL", "SupabaseDb", { uid: profile.id });
-      }
     } catch (err) {
-      logger.warn("Supabase user upsert exception", "SupabaseDb", err);
+      logger.warn("Supabase user sync error fallback", "SupabaseDb", err);
     }
   }
 
@@ -112,10 +131,10 @@ export async function createReportInDb(report: Report): Promise<Report> {
 
   if (supabase) {
     try {
-      const { error } = await supabase.from("reports").insert({
+      await supabase.from("reports").insert({
         id: report.id,
         report_type: report.reportType,
-        user_id: report.userId, // Foreign Key referencing users.id (Firebase Auth UID)
+        user_id: report.userId,
         title: report.title,
         description: report.description,
         category: report.category,
@@ -124,6 +143,7 @@ export async function createReportInDb(report: Report): Promise<Report> {
         color: report.color || null,
         material: report.material || null,
         distinctive_features: report.distinctiveFeatures || null,
+        private_ownership_proof: report.privateOwnershipProof || null,
         image_url: report.imageUrl || null,
         location: report.location,
         reported_at: report.reportedAt,
@@ -132,45 +152,55 @@ export async function createReportInDb(report: Report): Promise<Report> {
         created_at: report.createdAt || new Date().toISOString(),
         updated_at: report.updatedAt || new Date().toISOString(),
       });
-
-      if (error) {
-        logger.warn("Supabase report insert fallback to persistent store", "SupabaseDb", error.message);
-      } else {
-        logger.info("Report successfully stored in Supabase PostgreSQL", "SupabaseDb", { id: report.id });
-      }
     } catch (err) {
-      logger.warn("Supabase report insert exception", "SupabaseDb", err);
+      logger.warn("Supabase report insert fallback", "SupabaseDb", err);
     }
   }
 
   return report;
 }
 
-// 3. Get Report by ID
+// 3. Update Report Status
+export async function updateReportStatusInDb(reportId: string, status: ReportStatus): Promise<boolean> {
+  initStoreFromPersistence();
+  const report = localReportsStore.get(reportId);
+  if (report) {
+    report.status = status;
+    report.updatedAt = new Date().toISOString();
+    localReportsStore.set(report.id, report);
+    saveReportsToFile(Array.from(localReportsStore.values()));
+  }
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      await supabase.from("reports").update({ status, updated_at: new Date().toISOString() }).eq("id", reportId);
+    } catch (err) {
+      logger.warn("Supabase status update error", "SupabaseDb", err);
+    }
+  }
+
+  return true;
+}
+
+// 4. Get Report by ID
 export async function getReportByIdFromDb(reportId: string): Promise<Report | null> {
   initStoreFromPersistence();
   const supabase = getSupabaseClient();
 
   if (supabase) {
     try {
-      const { data, error } = await supabase
-        .from("reports")
-        .select("*")
-        .eq("id", reportId)
-        .single();
-
-      if (data && !error) {
-        return mapDbRowToReport(data);
-      }
+      const { data, error } = await supabase.from("reports").select("*").eq("id", reportId).single();
+      if (data && !error) return mapDbRowToReport(data);
     } catch (err) {
-      logger.warn("Error fetching report from Supabase. Falling back to persistent local store.", "SupabaseDb", err);
+      logger.warn("Supabase fetch report error", "SupabaseDb", err);
     }
   }
 
   return localReportsStore.get(reportId) || null;
 }
 
-// 4. Get Reports with Filters (Permanent UID matching)
+// 5. Get Reports with Filters
 export async function getReportsFromDb(filters?: {
   reportType?: ReportType;
   category?: string;
@@ -186,29 +216,24 @@ export async function getReportsFromDb(filters?: {
   if (supabase) {
     try {
       let query = supabase.from("reports").select("*");
-
       if (filters?.reportType) query = query.eq("report_type", filters.reportType);
       if (filters?.category) query = query.eq("category", filters.category);
       if (filters?.status) query = query.eq("status", filters.status);
       if (filters?.userId) query = query.ilike("user_id", filters.userId);
 
       query = query.order("reported_at", { ascending: false }).limit(maxLimit);
-
       const { data, error } = await query;
-      if (data && !error && data.length > 0) {
-        return data.map(mapDbRowToReport);
-      }
+      if (data && !error && data.length > 0) return data.map(mapDbRowToReport);
     } catch (err) {
-      logger.warn("Supabase query failed. Falling back to local data store.", "SupabaseDb", err);
+      logger.warn("Supabase reports query error", "SupabaseDb", err);
     }
   }
 
-  // Local filtered fallback
   let items = Array.from(localReportsStore.values());
   if (filters?.reportType) items = items.filter((r) => r.reportType === filters.reportType);
   if (filters?.category) items = items.filter((r) => r.category === filters.category);
   if (filters?.status) items = items.filter((r) => r.status === filters.status);
-  
+
   if (filters?.userId) {
     const targetUid = filters.userId.toLowerCase();
     items = items.filter((r) => r.userId?.toLowerCase() === targetUid);
@@ -228,7 +253,7 @@ export async function getReportsFromDb(filters?: {
   return items.slice(0, maxLimit);
 }
 
-// 5. Create & Query Claims
+// 6. Create / Update Claims
 export async function createClaimInDb(claim: Claim): Promise<Claim> {
   const supabase = getSupabaseClient();
   localClaimsStore.set(claim.id, claim);
@@ -236,7 +261,7 @@ export async function createClaimInDb(claim: Claim): Promise<Claim> {
 
   if (supabase) {
     try {
-      const { error } = await supabase.from("claims").insert({
+      await supabase.from("claims").insert({
         id: claim.id,
         report_id: claim.reportId,
         lost_report_id: claim.lostReportId || null,
@@ -247,18 +272,69 @@ export async function createClaimInDb(claim: Claim): Promise<Claim> {
         created_at: claim.createdAt,
         updated_at: claim.updatedAt,
       });
-
-      if (error) {
-        logger.warn("Supabase claim insert fallback to persistent layer", "SupabaseDb", error.message);
-      } else {
-        logger.info("Claim successfully stored in Supabase PostgreSQL", "SupabaseDb", { id: claim.id });
-      }
     } catch (err) {
-      logger.warn("Supabase claim insert exception", "SupabaseDb", err);
+      logger.warn("Supabase claim insert fallback", "SupabaseDb", err);
     }
   }
 
   return claim;
+}
+
+export async function updateClaimInDb(claimId: string, updates: Partial<Claim>): Promise<Claim | null> {
+  initStoreFromPersistence();
+  const existing = localClaimsStore.get(claimId);
+  if (!existing) return null;
+
+  const updated: Claim = {
+    ...existing,
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+
+  localClaimsStore.set(claimId, updated);
+  saveClaimsToFile(Array.from(localClaimsStore.values()));
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      await supabase.from("claims").update({
+        status: updated.status,
+        updated_at: updated.updatedAt,
+        proof_details: updated.proofDetails,
+      }).eq("id", claimId);
+    } catch (err) {
+      logger.warn("Supabase claim update error", "SupabaseDb", err);
+    }
+  }
+
+  return updated;
+}
+
+export async function getClaimByIdFromDb(claimId: string): Promise<Claim | null> {
+  initStoreFromPersistence();
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from("claims").select("*").eq("id", claimId).single();
+      if (data && !error) {
+        return {
+          id: data.id,
+          reportId: data.report_id,
+          lostReportId: data.lost_report_id || "",
+          claimantId: data.claimant_id,
+          finderId: data.finder_id || "",
+          proofDetails: data.proof_details,
+          status: data.status,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at,
+        };
+      }
+    } catch (err) {
+      logger.warn("Supabase get claim by ID error", "SupabaseDb", err);
+    }
+  }
+
+  return localClaimsStore.get(claimId) || null;
 }
 
 export async function getClaimsFromDb(filters?: {
@@ -266,40 +342,13 @@ export async function getClaimsFromDb(filters?: {
   lostReportId?: string;
   claimantId?: string;
   finderId?: string;
+  status?: ClaimStatus;
 }): Promise<Claim[]> {
   initStoreFromPersistence();
-  const supabase = getSupabaseClient();
-
-  if (supabase) {
-    try {
-      let query = supabase.from("claims").select("*");
-      if (filters?.reportId) query = query.eq("report_id", filters.reportId);
-      if (filters?.lostReportId) query = query.eq("lost_report_id", filters.lostReportId);
-      if (filters?.claimantId) query = query.ilike("claimant_id", filters.claimantId);
-      if (filters?.finderId) query = query.ilike("finder_id", filters.finderId);
-
-      const { data, error } = await query;
-      if (data && !error && data.length > 0) {
-        return data.map((c: any) => ({
-          id: c.id,
-          reportId: c.report_id,
-          lostReportId: c.lost_report_id,
-          claimantId: c.claimant_id,
-          finderId: c.finder_id,
-          proofDetails: c.proof_details,
-          status: c.status,
-          createdAt: c.created_at,
-          updatedAt: c.updated_at,
-        }));
-      }
-    } catch (err) {
-      logger.warn("Supabase claims query fallback to local data store", "SupabaseDb", err);
-    }
-  }
-
   let items = Array.from(localClaimsStore.values());
   if (filters?.reportId) items = items.filter((c) => c.reportId === filters.reportId);
   if (filters?.lostReportId) items = items.filter((c) => c.lostReportId === filters.lostReportId);
+  if (filters?.status) items = items.filter((c) => c.status === filters.status);
   if (filters?.claimantId) {
     const target = filters.claimantId.toLowerCase();
     items = items.filter((c) => c.claimantId.toLowerCase() === target);
@@ -313,28 +362,57 @@ export async function getClaimsFromDb(filters?: {
 }
 
 export async function hasExistingClaim(reportId: string, claimantId: string): Promise<boolean> {
-  const supabase = getSupabaseClient();
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from("claims")
-        .select("id")
-        .eq("report_id", reportId)
-        .ilike("claimant_id", claimantId)
-        .limit(1);
-
-      if (data && data.length > 0) return true;
-    } catch (err) {
-      logger.warn("Error checking existing claim in Supabase", "SupabaseDb", err);
-    }
-  }
-
   const targetClaimant = claimantId.toLowerCase();
   for (const c of Array.from(localClaimsStore.values())) {
-    if (c.reportId === reportId && c.claimantId.toLowerCase() === targetClaimant) {
+    if (c.reportId === reportId && c.claimantId.toLowerCase() === targetClaimant && c.status !== "CANCELLED" && c.status !== "REJECTED") {
       return true;
     }
   }
-
   return false;
+}
+
+// 7. Recovery Token Management
+export async function saveRecoveryTokenInDb(tokenRecord: RecoveryToken): Promise<RecoveryToken> {
+  initStoreFromPersistence();
+  localTokensStore.set(tokenRecord.tokenHash, tokenRecord);
+  saveTokensToFile(Array.from(localTokensStore.values()));
+  return tokenRecord;
+}
+
+export async function getRecoveryTokenByHash(tokenHash: string): Promise<RecoveryToken | null> {
+  initStoreFromPersistence();
+  return localTokensStore.get(tokenHash) || null;
+}
+
+export async function markRecoveryTokenUsed(tokenHash: string): Promise<boolean> {
+  initStoreFromPersistence();
+  const tokenRecord = localTokensStore.get(tokenHash);
+  if (tokenRecord) {
+    tokenRecord.usedAt = new Date().toISOString();
+    localTokensStore.set(tokenHash, tokenRecord);
+    saveTokensToFile(Array.from(localTokensStore.values()));
+    return true;
+  }
+  return false;
+}
+
+// 8. Audit Event Logging
+export async function logRecoveryEvent(event: Omit<RecoveryEvent, "id" | "createdAt">): Promise<RecoveryEvent> {
+  initStoreFromPersistence();
+  const newEvent: RecoveryEvent = {
+    ...event,
+    id: `ev-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    createdAt: new Date().toISOString(),
+  };
+
+  localEventsStore.set(newEvent.id, newEvent);
+  saveEventsToFile(Array.from(localEventsStore.values()));
+  return newEvent;
+}
+
+export async function getRecoveryEventsForClaim(claimId: string): Promise<RecoveryEvent[]> {
+  initStoreFromPersistence();
+  return Array.from(localEventsStore.values())
+    .filter((e) => e.claimId === claimId)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 }
