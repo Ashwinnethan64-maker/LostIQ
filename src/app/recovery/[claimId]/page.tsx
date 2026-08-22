@@ -15,8 +15,11 @@ import {
   AlertCircle,
   FileText,
   UserCheck,
+  Camera,
+  ExternalLink,
 } from "lucide-react";
 import { Claim, Report, RecoveryReceipt, RecoveryEvent } from "@/types";
+import { RecoveryQRCode } from "@/components/recovery/RecoveryQRCode";
 
 export default function RecoveryHubPage({ params }: { params: { claimId: string } }) {
   const { user, getFreshToken } = useAuth();
@@ -29,7 +32,7 @@ export default function RecoveryHubPage({ params }: { params: { claimId: string 
   const [loading, setLoading] = useState(true);
 
   // Recovery Pass QR State
-  const [passData, setPassData] = useState<{ token: string; qrPayload: string; expiresAt: string } | null>(null);
+  const [passData, setPassData] = useState<{ token: string; verificationUrl?: string; qrPayload: string; expiresAt: string } | null>(null);
   const [passLoading, setPassLoading] = useState(false);
   const [confirmingReceipt, setConfirmingReceipt] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -146,17 +149,30 @@ export default function RecoveryHubPage({ params }: { params: { claimId: string 
   const isCompleted = claim.status === "COMPLETED";
   const isFinderConfirmed = claim.handoverStatus === "FINDER_CONFIRMED" || claim.status === "FINDER_CONFIRMED";
 
+  const directVerifyUrl = passData?.verificationUrl || (passData?.token ? `/recovery/verify/${passData.token}` : "");
+
   return (
     <RouteGuard>
       <div className="max-w-4xl mx-auto space-y-8 py-4">
         
         {/* Navigation Breadcrumb */}
-        <Link
-          href="/dashboard"
-          className="neo-button px-4 py-2 text-xs bg-white text-black border-3 border-black hover:bg-[#E2E8F0]"
-        >
-          <ArrowLeft className="mr-1.5 h-4 w-4 inline" /> BACK TO CONTROL DESK
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/dashboard"
+            className="neo-button px-4 py-2 text-xs bg-white text-black border-3 border-black hover:bg-[#E2E8F0]"
+          >
+            <ArrowLeft className="mr-1.5 h-4 w-4 inline" /> BACK TO CONTROL DESK
+          </Link>
+
+          {isFinder && !isCompleted && (
+            <Link
+              href="/recovery/scan"
+              className="neo-button px-4 py-2 text-xs bg-[#FFD93D] text-black border-3 border-black hover:bg-[#FCC419] font-black"
+            >
+              <Camera className="mr-1.5 h-4 w-4 inline" /> OPEN IN-APP QR SCANNER
+            </Link>
+          )}
+        </div>
 
         {/* Primary Status Banner */}
         <div className="border-8 border-black bg-white p-6 sm:p-8 shadow-neo-xl space-y-4">
@@ -333,30 +349,42 @@ export default function RecoveryHubPage({ params }: { params: { claimId: string 
               </div>
             ) : passData ? (
               <div className="space-y-6">
-                <div className="border-4 border-black bg-[#FFFDF5] p-6 text-center space-y-4 shadow-neo">
-                  <div className="inline-flex items-center gap-1.5 bg-[#FF6B6B] text-white px-3 py-1 text-xs font-black uppercase">
+                <div className="border-4 border-black bg-[#FFFDF5] p-6 sm:p-8 text-center space-y-5 shadow-neo">
+                  <div className="inline-flex items-center gap-1.5 bg-[#FF6B6B] text-white px-3.5 py-1 text-xs font-black uppercase">
                     <Sparkles className="h-3.5 w-3.5" />
                     <span>ONE-TIME 10-MINUTE RECOVERY PASS</span>
                   </div>
 
-                  {/* Visual QR Card Representation */}
-                  <div className="p-6 bg-white border-4 border-black max-w-xs mx-auto shadow-neo-sm space-y-3">
-                    <div className="h-44 w-44 mx-auto border-4 border-black bg-[#FFD93D] flex flex-col items-center justify-center p-3 text-center space-y-1">
-                      <QrCode className="h-20 w-20 text-black" />
-                      <span className="text-[10px] font-black uppercase text-black break-all">
-                        {passData.token}
-                      </span>
-                    </div>
-                    <div className="text-[11px] font-black uppercase text-black">
+                  {/* Real Scannable High-Contrast Canvas QR Code */}
+                  <div className="space-y-3">
+                    <RecoveryQRCode payload={passData.qrPayload || passData.token} size={240} />
+
+                    <div className="text-xs font-black uppercase text-black tracking-wide">
                       SHOW TO FINDER TO SCAN &amp; VERIFY
                     </div>
                   </div>
 
-                  <div className="text-xs font-bold text-black/70 max-w-md mx-auto">
-                    Direct Finder URL: <code className="bg-[#E2E8F0] px-2 py-0.5 border border-black">{`/recovery/verify/${passData.token}`}</code>
+                  {/* Direct Verifiable URL */}
+                  <div className="border-2 border-black bg-white p-3 max-w-md mx-auto text-xs font-bold space-y-1">
+                    <div className="text-[10px] text-black/60 uppercase font-black">
+                      DIRECT VERIFICATION URL:
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <code className="bg-[#E2E8F0] px-2 py-1 border border-black text-[11px] break-all font-mono">
+                        {directVerifyUrl}
+                      </code>
+                      <Link
+                        href={directVerifyUrl}
+                        target="_blank"
+                        className="neo-button p-1 bg-[#FFD93D] text-black border border-black hover:bg-[#FCC419]"
+                        title="Open direct verification page"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </div>
 
-                  <p className="text-[11px] font-bold text-[#FF6B6B]">
+                  <p className="text-xs font-bold text-[#FF6B6B]">
                     ⏱ Pass automatically expires at {new Date(passData.expiresAt).toLocaleTimeString()}
                   </p>
                 </div>
@@ -382,15 +410,20 @@ export default function RecoveryHubPage({ params }: { params: { claimId: string 
           </div>
         ) : (
           /* State C: Finder View */
-          <div className="border-6 border-black bg-white p-6 sm:p-8 shadow-neo-lg space-y-4">
+          <div className="border-6 border-black bg-white p-6 sm:p-8 shadow-neo-lg space-y-5">
             <h3 className="text-2xl font-black uppercase text-black border-b-4 border-black pb-2">
               FINDER CUSTODY &amp; HANDOVER VERIFICATION
             </h3>
             <p className="text-xs font-bold text-black/85 leading-relaxed">
-              The owner has passed zero-knowledge ownership verification. To confirm the physical return of this valuable, ask the owner to show their 10-minute Recovery Pass QR, then scan it or open the verification link.
+              The owner has passed zero-knowledge ownership verification. To confirm the physical return of this valuable, ask the owner to show their 10-minute Recovery Pass QR, then scan it with our in-app scanner.
             </p>
-            <div className="border-3 border-black bg-[#FFD93D] p-4 text-xs font-black uppercase">
-              STATUS: WAITING FOR PHYSICAL MEETUP &amp; SCAN
+            <div className="pt-2">
+              <Link
+                href="/recovery/scan"
+                className="neo-button w-full py-4 text-sm font-black bg-[#FFD93D] text-black border-4 border-black hover:bg-[#FCC419] shadow-neo text-center block"
+              >
+                <Camera className="mr-2 h-5 w-5 inline" /> OPEN IN-APP QR SCANNER →
+              </Link>
             </div>
           </div>
         )}

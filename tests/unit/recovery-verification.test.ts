@@ -17,6 +17,7 @@ import { Report, Claim, RecoveryToken } from "@/types";
 import { POST as verifyClaimHandler } from "@/app/api/claims/create/route";
 import { POST as generatePassHandler } from "@/app/api/claims/pass/generate/route";
 import { GET as validatePassHandler } from "@/app/api/claims/pass/validate/route";
+import { POST as verifyRecoveryQrHandler } from "@/app/api/recovery/verify/route";
 import { POST as confirmHandoverHandler } from "@/app/api/claims/handover/confirm/route";
 import { POST as confirmReceiptHandler } from "@/app/api/claims/receipt/confirm/route";
 import { NextRequest } from "next/server";
@@ -169,6 +170,7 @@ describe("LostIQ Verified Recovery & Safe Handover System", () => {
 
     let verifiedClaimId: string;
     let generatedPassToken: string;
+    let generatedQrPayload: string;
 
     it("verifies owner and creates active claim with 201 when proof is correct", async () => {
       const ownerToken = Buffer.from(
@@ -194,7 +196,7 @@ describe("LostIQ Verified Recovery & Safe Handover System", () => {
       verifiedClaimId = body.claim.id;
     });
 
-    it("generates a 10-minute cryptographic recovery pass token", async () => {
+    it("generates a 10-minute cryptographic recovery pass token with valid QR payload", async () => {
       const ownerToken = Buffer.from(
         JSON.stringify({ user_id: ownerUid, email: "owner@campus.edu", exp: Math.floor(Date.now() / 1000) + 3600 })
       ).toString("base64");
@@ -211,11 +213,31 @@ describe("LostIQ Verified Recovery & Safe Handover System", () => {
       const body = await res.json();
       expect(body.success).toBe(true);
       expect(body.pass.token).toBeDefined();
-      expect(body.pass.qrPayload).toContain("LOSTIQ_RECOVERY_TOKEN=");
+      expect(body.pass.qrPayload).toContain("/recovery/verify/");
       generatedPassToken = body.pass.token;
+      generatedQrPayload = body.pass.qrPayload;
     });
 
-    it("validates recovery pass token for finder QR scan", async () => {
+    it("verifies the scanned QR payload with the in-app verification API (/api/recovery/verify)", async () => {
+      const req = new NextRequest("http://localhost:3005/api/recovery/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: generatedQrPayload, // Full QR verification URL string
+          finderUserId: finderUid,
+        }),
+      });
+
+      const res = await verifyRecoveryQrHandler(req);
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.valid).toBe(true);
+      expect(body.status).toBe("READY_FOR_HANDOVER");
+      expect(body.recoveryId).toBe(verifiedClaimId);
+      expect(body.itemLabel).toContain("Casio Watch");
+    });
+
+    it("validates recovery pass token for finder direct URL", async () => {
       const req = new NextRequest(`http://localhost:3005/api/claims/pass/validate?token=${generatedPassToken}`);
       const res = await validatePassHandler(req);
       expect(res.status).toBe(200);
@@ -242,10 +264,16 @@ describe("LostIQ Verified Recovery & Safe Handover System", () => {
       const body = await res.json();
       expect(body.claim.handoverStatus).toBe("FINDER_CONFIRMED");
 
-      // Verify token cannot be reused
-      const replayReq = new NextRequest(`http://localhost:3005/api/claims/pass/validate?token=${generatedPassToken}`);
-      const replayRes = await validatePassHandler(replayReq);
+      // Verify token cannot be reused via in-app verify endpoint
+      const replayReq = new NextRequest("http://localhost:3005/api/recovery/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: generatedPassToken }),
+      });
+      const replayRes = await verifyRecoveryQrHandler(replayReq);
       expect(replayRes.status).toBe(409);
+      const replayBody = await replayRes.json();
+      expect(replayBody.reason).toBe("ALREADY_USED");
     });
 
     it("allows owner to confirm receipt, transitions reports to RECOVERED, and generates receipt", async () => {

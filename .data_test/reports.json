@@ -477,5 +477,197 @@
     "status": "RECOVERED",
     "createdAt": "2026-08-22T18:38:50.609Z",
     "updatedAt": "2026-08-22T18:38:50.699Z"
+  },
+  {
+    "id": "rep-found-earbuds-1787425214866",
+    "reportType": "FOUND",
+    "userId": "security-officer-99",
+    "title": "Found Wireless Earbuds",
+    "description": "Found black wireless earbuds",
+    "category": "electronics",
+    "location": {
+      "name": "Library"
+    },
+    "reportedAt": "2026-08-22T19:00:14.866Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T19:00:14.866Z",
+    "updatedAt": "2026-08-22T19:00:14.866Z"
+  },
+  {
+    "id": "rep-found-camera-1787425214894",
+    "reportType": "FOUND",
+    "userId": "finder-officer-77",
+    "title": "Found Camera",
+    "description": "Found camera",
+    "category": "electronics",
+    "location": {
+      "name": "Quad"
+    },
+    "reportedAt": "2026-08-22T19:00:14.894Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T19:00:14.894Z",
+    "updatedAt": "2026-08-22T19:00:14.894Z"
+  },
+  {
+    "id": "rep-found-wallet-1787425214909",
+    "reportType": "FOUND",
+    "userId": "finder-alex",
+    "title": "Found Wallet",
+    "description": "Found brown wallet",
+    "category": "id_cards",
+    "location": {
+      "name": "Dining"
+    },
+    "reportedAt": "2026-08-22T19:00:14.909Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T19:00:14.909Z",
+    "updatedAt": "2026-08-22T19:00:14.909Z"
+  },
+  {
+    "id": "rep-test-lost-wallet-1787425214914",
+    "reportType": "LOST",
+    "userId": "user-owner-alpha",
+    "title": "Lost Leather Wallet",
+    "description": "Lost brown wallet",
+    "category": "id_cards",
+    "location": {
+      "name": "Quad"
+    },
+    "reportedAt": "2026-08-22T19:00:14.914Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T19:00:14.914Z",
+    "updatedAt": "2026-08-22T19:00:14.914Z"
+  },
+  {
+    "id": "rep-lost-1787425214967",
+    "reportType": "LOST",
+    "userId": "owner-uid-1787425214961",
+    "title": "Lost Casio Watch",
+    "description": "Lost black watch near quad",
+    "category": "jewelry_watches",
+    "brand": "Casio",
+    "color": "Black",
+    "distinctiveFeatures": "Minor surface wear",
+    "privateOwnershipProof": "small scratch near 3 o'clock position",
+    "location": {
+      "name": "Quad Bench"
+    },
+    "reportedAt": "2026-08-22T19:00:14.967Z",
+    "status": "RECOVERED",
+    "createdAt": "2026-08-22T19:00:14.968Z",
+    "updatedAt": "2026-08-22T19:00:15.062Z"
+  },
+  {
+    "id": "rep-found-1787425214967",
+    "reportType": "FOUND",
+    "userId": "finder-uid-1787425214961",
+    "title": "Found Casio Watch",
+    "description": "Found black watch near quad benches",
+    "category": "jewelry_watches",
+    "brand": "Casio",
+    "color": "Black",
+    "location": {
+      "name": "Quad Bench"
+    },
+    "reportedAt": "2026-08-22T19:00:14.968Z",
+    "status": "RECOVERED",
+    "createdAt": "2026-08-22T19:00:14.968Z",
+    "updatedAt": "2026-08-22T19:00:15.060Z"
+  },
+  {
+    "id": "rep-found-earbuds-1787425267060",
+    "reportType": "FOUND",
+    "userId": "security-officer-99",
+    "title": "Found Wireless Earbuds",
+    "description": "Found black wireless earbuds",
+    "category": "electronics",
+    "location": {
+      "name": "Library"
+    },
+    "reportedAt": "2026-08-22T19:01:07.060Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T19:01:07.060Z",
+    "updatedAt": "2026-08-22T19:01:07.060Z"
+  },
+  {
+    "id": "rep-found-camera-1787425267085",
+    "reportType": "FOUND",
+    "userId": "finder-officer-77",
+    "title": "Found Camera",
+    "description": "Found camera",
+    "category": "electronics",
+    "location": {
+      "name": "Quad"
+    },
+    "reportedAt": "2026-08-22T19:01:07.085Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T19:01:07.085Z",
+    "updatedAt": "2026-08-22T19:01:07.085Z"
+  },
+  {
+    "id": "rep-found-wallet-1787425267094",
+    "reportType": "FOUND",
+    "userId": "finder-alex",
+    "title": "Found Wallet",
+    "description": "Found brown wallet",
+    "category": "id_cards",
+    "location": {
+      "name": "Dining"
+    },
+    "reportedAt": "2026-08-22T19:01:07.094Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T19:01:07.094Z",
+    "updatedAt": "2026-08-22T19:01:07.094Z"
+  },
+  {
+    "id": "rep-test-lost-wallet-1787425267098",
+    "reportType": "LOST",
+    "userId": "user-owner-alpha",
+    "title": "Lost Leather Wallet",
+    "description": "Lost brown wallet",
+    "category": "id_cards",
+    "location": {
+      "name": "Quad"
+    },
+    "reportedAt": "2026-08-22T19:01:07.098Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T19:01:07.098Z",
+    "updatedAt": "2026-08-22T19:01:07.098Z"
+  },
+  {
+    "id": "rep-lost-1787425267195",
+    "reportType": "LOST",
+    "userId": "owner-uid-1787425267187",
+    "title": "Lost Casio Watch",
+    "description": "Lost black watch near quad",
+    "category": "jewelry_watches",
+    "brand": "Casio",
+    "color": "Black",
+    "distinctiveFeatures": "Minor surface wear",
+    "privateOwnershipProof": "small scratch near 3 o'clock position",
+    "location": {
+      "name": "Quad Bench"
+    },
+    "reportedAt": "2026-08-22T19:01:07.195Z",
+    "status": "RECOVERED",
+    "createdAt": "2026-08-22T19:01:07.196Z",
+    "updatedAt": "2026-08-22T19:01:07.316Z"
+  },
+  {
+    "id": "rep-found-1787425267195",
+    "reportType": "FOUND",
+    "userId": "finder-uid-1787425267187",
+    "title": "Found Casio Watch",
+    "description": "Found black watch near quad benches",
+    "category": "jewelry_watches",
+    "brand": "Casio",
+    "color": "Black",
+    "location": {
+      "name": "Quad Bench"
+    },
+    "reportedAt": "2026-08-22T19:01:07.196Z",
+    "status": "RECOVERED",
+    "createdAt": "2026-08-22T19:01:07.196Z",
+    "updatedAt": "2026-08-22T19:01:07.314Z"
   }
 ]

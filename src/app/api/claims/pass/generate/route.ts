@@ -61,7 +61,16 @@ export async function POST(req: NextRequest) {
       metadata: { expiresAt },
     });
 
-    logger.info("Recovery pass generated successfully", "RecoveryPassAPI", { claimId: claim.id, expiresAt });
+    // Derive canonical verification URL for QR payload
+    const origin = req.nextUrl.origin || "https://campus-not-found-ai.vercel.app";
+    const verificationUrl = `${origin}/recovery/verify/${token}`;
+
+    logger.info("Recovery pass generated successfully", "RecoveryPassAPI", {
+      claimId: claim.id,
+      token,
+      expiresAt,
+      verificationUrl,
+    });
 
     return NextResponse.json({
       success: true,
@@ -69,7 +78,8 @@ export async function POST(req: NextRequest) {
         token,
         claimId: claim.id,
         expiresAt,
-        qrPayload: `LOSTIQ_RECOVERY_TOKEN=${token}`,
+        verificationUrl,
+        qrPayload: verificationUrl,
       },
     }, { status: 200 });
   } catch (err: any) {

@@ -924,5 +924,271 @@
     },
     "id": "ev-1787423930705-1pum",
     "createdAt": "2026-08-22T18:38:50.705Z"
+  },
+  {
+    "claimId": "claim-1787425214875",
+    "eventType": "OWNER_VERIFICATION_STARTED",
+    "actorUserId": "claimant-uid-1787425214871",
+    "metadata": {
+      "targetFoundId": "rep-found-earbuds-1787425214866"
+    },
+    "id": "ev-1787425214878-n4as",
+    "createdAt": "2026-08-22T19:00:14.878Z"
+  },
+  {
+    "claimId": "claim-1787425214875",
+    "eventType": "OWNER_VERIFICATION_PASSED",
+    "actorUserId": "claimant-uid-1787425214871",
+    "metadata": {
+      "score": 0
+    },
+    "id": "ev-1787425214887-irfx",
+    "createdAt": "2026-08-22T19:00:14.887Z"
+  },
+  {
+    "claimId": "claim-1787425214875",
+    "eventType": "CLAIM_CREATED",
+    "actorUserId": "claimant-uid-1787425214871",
+    "id": "ev-1787425214891-ulnv",
+    "createdAt": "2026-08-22T19:00:14.891Z"
+  },
+  {
+    "claimId": "claim-1787425214995",
+    "eventType": "OWNER_VERIFICATION_STARTED",
+    "actorUserId": "owner-uid-1787425214961",
+    "metadata": {
+      "targetFoundId": "rep-found-1787425214967",
+      "sourceLostId": "rep-lost-1787425214967"
+    },
+    "id": "ev-1787425214997-32gi",
+    "createdAt": "2026-08-22T19:00:14.998Z"
+  },
+  {
+    "claimId": "claim-1787425214995",
+    "eventType": "OWNER_VERIFICATION_FAILED",
+    "actorUserId": "owner-uid-1787425214961",
+    "metadata": {
+      "score": 25
+    },
+    "id": "ev-1787425214999-sp5y",
+    "createdAt": "2026-08-22T19:00:14.999Z"
+  },
+  {
+    "claimId": "claim-1787425215005",
+    "eventType": "OWNER_VERIFICATION_STARTED",
+    "actorUserId": "owner-uid-1787425214961",
+    "metadata": {
+      "targetFoundId": "rep-found-1787425214967",
+      "sourceLostId": "rep-lost-1787425214967"
+    },
+    "id": "ev-1787425215007-kyis",
+    "createdAt": "2026-08-22T19:00:15.007Z"
+  },
+  {
+    "claimId": "claim-1787425215005",
+    "eventType": "OWNER_VERIFICATION_PASSED",
+    "actorUserId": "owner-uid-1787425214961",
+    "metadata": {
+      "score": 100
+    },
+    "id": "ev-1787425215011-6arc",
+    "createdAt": "2026-08-22T19:00:15.011Z"
+  },
+  {
+    "claimId": "claim-1787425215005",
+    "eventType": "CLAIM_CREATED",
+    "actorUserId": "owner-uid-1787425214961",
+    "id": "ev-1787425215014-7kq2",
+    "createdAt": "2026-08-22T19:00:15.014Z"
+  },
+  {
+    "claimId": "claim-1787425215005",
+    "eventType": "RECOVERY_PASS_CREATED",
+    "actorUserId": "owner-uid-1787425214961",
+    "metadata": {
+      "expiresAt": "2026-08-22T19:10:15.021Z"
+    },
+    "id": "ev-1787425215025-dc72",
+    "createdAt": "2026-08-22T19:00:15.025Z"
+  },
+  {
+    "claimId": "claim-1787425215005",
+    "eventType": "QR_TOKEN_VERIFIED",
+    "actorUserId": "finder-uid-1787425214961",
+    "metadata": {
+      "expiresAt": "2026-08-22T19:10:15.021Z"
+    },
+    "id": "ev-1787425215034-a1lv",
+    "createdAt": "2026-08-22T19:00:15.034Z"
+  },
+  {
+    "claimId": "claim-1787425215005",
+    "eventType": "RECOVERY_PASS_USED",
+    "actorUserId": "finder-uid-1787425214961",
+    "id": "ev-1787425215048-rjnn",
+    "createdAt": "2026-08-22T19:00:15.048Z"
+  },
+  {
+    "claimId": "claim-1787425215005",
+    "eventType": "FINDER_CONFIRMED",
+    "actorUserId": "finder-uid-1787425214961",
+    "metadata": {
+      "finderConfirmedAt": "2026-08-22T19:00:15.051Z"
+    },
+    "id": "ev-1787425215052-rm6q",
+    "createdAt": "2026-08-22T19:00:15.052Z"
+  },
+  {
+    "claimId": "claim-1787425215005",
+    "eventType": "OWNER_CONFIRMED",
+    "actorUserId": "owner-uid-1787425214961",
+    "metadata": {
+      "ownerReceivedAt": "2026-08-22T19:00:15.057Z"
+    },
+    "id": "ev-1787425215064-ivj5",
+    "createdAt": "2026-08-22T19:00:15.064Z"
+  },
+  {
+    "claimId": "claim-1787425215005",
+    "eventType": "RECOVERY_COMPLETED",
+    "actorUserId": "owner-uid-1787425214961",
+    "metadata": {
+      "completedAt": "2026-08-22T19:00:15.057Z"
+    },
+    "id": "ev-1787425215065-zwnz",
+    "createdAt": "2026-08-22T19:00:15.065Z"
+  },
+  {
+    "claimId": "claim-1787425267069",
+    "eventType": "OWNER_VERIFICATION_STARTED",
+    "actorUserId": "claimant-uid-1787425267065",
+    "metadata": {
+      "targetFoundId": "rep-found-earbuds-1787425267060"
+    },
+    "id": "ev-1787425267072-r644",
+    "createdAt": "2026-08-22T19:01:07.072Z"
+  },
+  {
+    "claimId": "claim-1787425267069",
+    "eventType": "OWNER_VERIFICATION_PASSED",
+    "actorUserId": "claimant-uid-1787425267065",
+    "metadata": {
+      "score": 0
+    },
+    "id": "ev-1787425267080-qas1",
+    "createdAt": "2026-08-22T19:01:07.080Z"
+  },
+  {
+    "claimId": "claim-1787425267069",
+    "eventType": "CLAIM_CREATED",
+    "actorUserId": "claimant-uid-1787425267065",
+    "id": "ev-1787425267083-5qaq",
+    "createdAt": "2026-08-22T19:01:07.083Z"
+  },
+  {
+    "claimId": "claim-1787425267235",
+    "eventType": "OWNER_VERIFICATION_STARTED",
+    "actorUserId": "owner-uid-1787425267187",
+    "metadata": {
+      "targetFoundId": "rep-found-1787425267195",
+      "sourceLostId": "rep-lost-1787425267195"
+    },
+    "id": "ev-1787425267237-nev5",
+    "createdAt": "2026-08-22T19:01:07.237Z"
+  },
+  {
+    "claimId": "claim-1787425267235",
+    "eventType": "OWNER_VERIFICATION_FAILED",
+    "actorUserId": "owner-uid-1787425267187",
+    "metadata": {
+      "score": 25
+    },
+    "id": "ev-1787425267240-fsqv",
+    "createdAt": "2026-08-22T19:01:07.240Z"
+  },
+  {
+    "claimId": "claim-1787425267248",
+    "eventType": "OWNER_VERIFICATION_STARTED",
+    "actorUserId": "owner-uid-1787425267187",
+    "metadata": {
+      "targetFoundId": "rep-found-1787425267195",
+      "sourceLostId": "rep-lost-1787425267195"
+    },
+    "id": "ev-1787425267250-an7e",
+    "createdAt": "2026-08-22T19:01:07.250Z"
+  },
+  {
+    "claimId": "claim-1787425267248",
+    "eventType": "OWNER_VERIFICATION_PASSED",
+    "actorUserId": "owner-uid-1787425267187",
+    "metadata": {
+      "score": 100
+    },
+    "id": "ev-1787425267255-qwlp",
+    "createdAt": "2026-08-22T19:01:07.255Z"
+  },
+  {
+    "claimId": "claim-1787425267248",
+    "eventType": "CLAIM_CREATED",
+    "actorUserId": "owner-uid-1787425267187",
+    "id": "ev-1787425267258-s3an",
+    "createdAt": "2026-08-22T19:01:07.258Z"
+  },
+  {
+    "claimId": "claim-1787425267248",
+    "eventType": "RECOVERY_PASS_CREATED",
+    "actorUserId": "owner-uid-1787425267187",
+    "metadata": {
+      "expiresAt": "2026-08-22T19:11:07.265Z"
+    },
+    "id": "ev-1787425267270-zv77",
+    "createdAt": "2026-08-22T19:01:07.270Z"
+  },
+  {
+    "claimId": "claim-1787425267248",
+    "eventType": "QR_TOKEN_VERIFIED",
+    "actorUserId": "finder-uid-1787425267187",
+    "metadata": {
+      "expiresAt": "2026-08-22T19:11:07.265Z"
+    },
+    "id": "ev-1787425267281-ahu7",
+    "createdAt": "2026-08-22T19:01:07.281Z"
+  },
+  {
+    "claimId": "claim-1787425267248",
+    "eventType": "RECOVERY_PASS_USED",
+    "actorUserId": "finder-uid-1787425267187",
+    "id": "ev-1787425267299-h8mr",
+    "createdAt": "2026-08-22T19:01:07.299Z"
+  },
+  {
+    "claimId": "claim-1787425267248",
+    "eventType": "FINDER_CONFIRMED",
+    "actorUserId": "finder-uid-1787425267187",
+    "metadata": {
+      "finderConfirmedAt": "2026-08-22T19:01:07.301Z"
+    },
+    "id": "ev-1787425267303-1v45",
+    "createdAt": "2026-08-22T19:01:07.303Z"
+  },
+  {
+    "claimId": "claim-1787425267248",
+    "eventType": "OWNER_CONFIRMED",
+    "actorUserId": "owner-uid-1787425267187",
+    "metadata": {
+      "ownerReceivedAt": "2026-08-22T19:01:07.310Z"
+    },
+    "id": "ev-1787425267319-5xny",
+    "createdAt": "2026-08-22T19:01:07.319Z"
+  },
+  {
+    "claimId": "claim-1787425267248",
+    "eventType": "RECOVERY_COMPLETED",
+    "actorUserId": "owner-uid-1787425267187",
+    "metadata": {
+      "completedAt": "2026-08-22T19:01:07.310Z"
+    },
+    "id": "ev-1787425267322-h82r",
+    "createdAt": "2026-08-22T19:01:07.322Z"
   }
 ]

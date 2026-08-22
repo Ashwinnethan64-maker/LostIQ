@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Shield, Menu, X } from "lucide-react";
+import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Shield, Menu, X, QrCode } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getFirstName } from "@/lib/utils";
@@ -17,7 +17,10 @@ export function Navbar() {
     { href: "/reports", label: "EXPLORE", icon: Search },
     { href: "/report/lost", label: "REPORT LOST", icon: PlusCircle, highlight: "lost" },
     { href: "/report/found", label: "REPORT FOUND", icon: PlusCircle, highlight: "found" },
-    ...(user ? [{ href: "/dashboard", label: "CONTROL DESK", icon: LayoutDashboard }] : []),
+    ...(user ? [
+      { href: "/recovery/scan", label: "SCAN QR", icon: QrCode, highlight: "scan" },
+      { href: "/dashboard", label: "CONTROL DESK", icon: LayoutDashboard },
+    ] : []),
   ];
 
   const firstName = getFirstName(user);
@@ -60,6 +63,8 @@ export function Navbar() {
               bgClass = isActive ? "bg-[#FF6B6B] text-white shadow-neo-sm" : "bg-white text-black hover:bg-[#FF6B6B] hover:text-white";
             } else if (link.highlight === "found") {
               bgClass = isActive ? "bg-[#FFD93D] text-black shadow-neo-sm" : "bg-white text-black hover:bg-[#FFD93D]";
+            } else if (link.highlight === "scan") {
+              bgClass = isActive ? "bg-[#C4B5FD] text-black shadow-neo-sm" : "bg-white text-black hover:bg-[#C4B5FD]";
             }
 
             return (
@@ -74,7 +79,7 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Auth Section (Issues 9, 10, 11, 21 Fix: Render First Name & Avatar, no raw UID/email) */}
+        {/* Auth Section */}
         <div className="hidden lg:flex items-center gap-3">
           {loading ? (
             <div className="h-10 w-24 border-3 border-black bg-muted animate-pulse" />
