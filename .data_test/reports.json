@@ -345,5 +345,41 @@
     "status": "RECOVERED",
     "createdAt": "2026-08-22T18:24:34.766Z",
     "updatedAt": "2026-08-22T18:24:34.807Z"
+  },
+  {
+    "id": "rep-lost-1787423236824",
+    "reportType": "LOST",
+    "userId": "owner-uid-1787423236816",
+    "title": "Lost Casio Watch",
+    "description": "Lost black watch near quad",
+    "category": "jewelry_watches",
+    "brand": "Casio",
+    "color": "Black",
+    "distinctiveFeatures": "Minor surface wear",
+    "privateOwnershipProof": "small scratch near 3 o'clock position",
+    "location": {
+      "name": "Quad Bench"
+    },
+    "reportedAt": "2026-08-22T18:27:16.824Z",
+    "status": "RECOVERED",
+    "createdAt": "2026-08-22T18:27:16.826Z",
+    "updatedAt": "2026-08-22T18:27:16.874Z"
+  },
+  {
+    "id": "rep-found-1787423236824",
+    "reportType": "FOUND",
+    "userId": "finder-uid-1787423236816",
+    "title": "Found Casio Watch",
+    "description": "Found black watch near quad benches",
+    "category": "jewelry_watches",
+    "brand": "Casio",
+    "color": "Black",
+    "location": {
+      "name": "Quad Bench"
+    },
+    "reportedAt": "2026-08-22T18:27:16.826Z",
+    "status": "RECOVERED",
+    "createdAt": "2026-08-22T18:27:16.826Z",
+    "updatedAt": "2026-08-22T18:27:16.873Z"
   }
 ]

@@ -158,5 +158,22 @@
     "updatedAt": "2026-08-22T18:24:34.806Z",
     "finderConfirmedAt": "2026-08-22T18:24:34.801Z",
     "ownerReceivedAt": "2026-08-22T18:24:34.806Z"
+  },
+  {
+    "id": "claim-1787423236851",
+    "reportId": "rep-found-1787423236824",
+    "lostReportId": "rep-lost-1787423236824",
+    "claimantId": "owner-uid-1787423236816",
+    "finderId": "finder-uid-1787423236816",
+    "proofDetails": "scratch near 3 o'clock position on bezel",
+    "verificationAttempts": 1,
+    "verificationStatus": "PASSED",
+    "handoverStatus": "COMPLETED",
+    "status": "COMPLETED",
+    "verifiedAt": "2026-08-22T18:27:16.852Z",
+    "createdAt": "2026-08-22T18:27:16.852Z",
+    "updatedAt": "2026-08-22T18:27:16.873Z",
+    "finderConfirmedAt": "2026-08-22T18:27:16.867Z",
+    "ownerReceivedAt": "2026-08-22T18:27:16.872Z"
   }
 ]

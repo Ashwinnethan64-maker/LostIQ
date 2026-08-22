@@ -61,5 +61,14 @@
     "expiresAt": "2026-08-22T18:34:34.795Z",
     "createdAt": "2026-08-22T18:24:34.795Z",
     "usedAt": "2026-08-22T18:24:34.800Z"
+  },
+  {
+    "id": "tok-1787423236858",
+    "claimId": "claim-1787423236851",
+    "token": "LQ-BBFA4BBED91C3F84D30A91826714B3CE9ACF7D9304C8944B",
+    "tokenHash": "1f00ae3bc47d6e51f765e97005d6ee5416e3ef14d26f8a7eca6004ade8f3fa7d",
+    "expiresAt": "2026-08-22T18:37:16.858Z",
+    "createdAt": "2026-08-22T18:27:16.858Z",
+    "usedAt": "2026-08-22T18:27:16.865Z"
   }
 ]

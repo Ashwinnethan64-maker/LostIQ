@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { Search, MapPin, ArrowRight } from "lucide-react";
+import { Search, MapPin, ArrowRight, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Report, ReportType, ItemCategory } from "@/types";
 
 const CATEGORIES: { value: ItemCategory | "all"; label: string }[] = [
@@ -21,35 +21,69 @@ const CATEGORIES: { value: ItemCategory | "all"; label: string }[] = [
 export default function ReportsDirectoryPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<ReportType | "ALL">("ALL");
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory | "all">("all");
 
-  useEffect(() => {
-    async function fetchReports() {
-      setLoading(true);
-      try {
-        const queryParams = new URLSearchParams();
-        if (searchQuery) queryParams.set("q", searchQuery);
-        if (selectedType !== "ALL") queryParams.set("type", selectedType);
-        if (selectedCategory !== "all") queryParams.set("category", selectedCategory);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-        const endpoint = searchQuery ? `/api/search?${queryParams.toString()}` : `/api/reports?${queryParams.toString()}`;
-        const res = await fetch(endpoint);
-        const data = await res.json();
-        if (data.success) {
-          setReports(data.reports || []);
-        }
-      } catch (err) {
-        console.error("Error fetching reports", err);
-      } finally {
-        setLoading(false);
-      }
+  const fetchReports = useCallback(async () => {
+    // Cancel any in-flight request to prevent race-condition stale overwrites
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-    const timer = setTimeout(fetchReports, 250);
-    return () => clearTimeout(timer);
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const queryParams = new URLSearchParams();
+      if (searchQuery.trim()) queryParams.set("q", searchQuery.trim());
+      if (selectedType !== "ALL") queryParams.set("type", selectedType);
+      if (selectedCategory !== "all") queryParams.set("category", selectedCategory);
+
+      const endpoint = searchQuery.trim()
+        ? `/api/search?${queryParams.toString()}`
+        : `/api/reports?${queryParams.toString()}`;
+
+      const res = await fetch(endpoint, {
+        signal: controller.signal,
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        setReports(data.reports || []);
+      } else {
+        throw new Error(data.error || "Failed to retrieve reports from server");
+      }
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        return; // Normal cancellation on fast typing/filter switching
+      }
+      console.error("Directory fetch error", err);
+      setErrorMessage("Unable to load reports from database. Please check your connection.");
+    } finally {
+      setLoading(false);
+    }
   }, [searchQuery, selectedType, selectedCategory]);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchReports, 200);
+    return () => {
+      clearTimeout(timer);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [fetchReports]);
 
   return (
     <div className="space-y-10 py-4">
@@ -127,14 +161,29 @@ export default function ReportsDirectoryPage() {
 
       {/* Reports Grid */}
       <div className="space-y-6">
-        {/* Issue 3 Fix: Removed 'AUTO-SYNCED TO SUPABASE' infrastructure text from header */}
         <div className="flex items-center justify-between border-b-4 border-black pb-2">
           <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black">
-            ACTIVE REPORTS ({reports.length})
+            ACTIVE REPORTS ({loading ? "..." : reports.length})
           </h2>
         </div>
 
-        {loading ? (
+        {errorMessage ? (
+          <div className="border-4 border-black bg-[#FF6B6B] text-white p-6 shadow-neo space-y-3">
+            <div className="flex items-center gap-2 font-black text-base uppercase">
+              <AlertCircle className="h-6 w-6" />
+              <span>UNABLE TO LOAD DIRECTORY</span>
+            </div>
+            <p className="text-xs font-bold text-white/90">
+              {errorMessage}
+            </p>
+            <button
+              onClick={fetchReports}
+              className="neo-button px-4 py-2 text-xs bg-white text-black border-2 border-black hover:bg-black hover:text-white font-black"
+            >
+              <RefreshCw className="h-3.5 w-3.5 inline mr-1" /> RETRY SEARCH
+            </button>
+          </div>
+        ) : loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="border-4 border-black bg-white p-5 shadow-neo space-y-4 animate-pulse">
