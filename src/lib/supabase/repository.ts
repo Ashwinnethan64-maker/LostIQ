@@ -211,7 +211,7 @@ export async function getReportsFromDb(filters?: {
       if (filters?.reportType) query = query.eq("report_type", filters.reportType);
       if (filters?.category) query = query.eq("category", filters.category);
       if (filters?.status) query = query.eq("status", filters.status);
-      if (filters?.userId) query = query.eq("user_id", filters.userId);
+      if (filters?.userId) query = query.ilike("user_id", filters.userId);
 
       query = query.order("reported_at", { ascending: false }).limit(maxLimit);
 
@@ -224,12 +224,15 @@ export async function getReportsFromDb(filters?: {
     }
   }
 
-  // Local filtered fallback
+  // Local filtered fallback (case-insensitive userId matching)
   let items = Array.from(localReportsStore.values());
   if (filters?.reportType) items = items.filter((r) => r.reportType === filters.reportType);
   if (filters?.category) items = items.filter((r) => r.category === filters.category);
   if (filters?.status) items = items.filter((r) => r.status === filters.status);
-  if (filters?.userId) items = items.filter((r) => r.userId === filters.userId);
+  if (filters?.userId) {
+    const targetUid = filters.userId.toLowerCase();
+    items = items.filter((r) => r.userId?.toLowerCase() === targetUid);
+  }
 
   if (filters?.search) {
     const term = filters.search.toLowerCase();
