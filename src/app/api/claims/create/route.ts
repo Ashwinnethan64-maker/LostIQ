@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const claimantUid = session.uid;
+    const currentUserId = session.uid;
     const body = await req.json().catch(() => ({}));
 
     if (!body.reportId || !body.proofDetails || !body.proofDetails.trim()) {
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Verify Target FOUND report
+    // Step 1: Load Target FOUND report from database
     const targetFound = await getReportByIdFromDb(body.reportId);
     if (!targetFound) {
       return NextResponse.json(
@@ -48,8 +48,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Prevent Finder from claiming own item
-    if (targetFound.userId && targetFound.userId.toLowerCase() === claimantUid.toLowerCase()) {
+    // Step 2: Strict Invariant: Prevent Finder from claiming own found item
+    const finderUserId = targetFound.userId;
+    if (finderUserId && finderUserId.toLowerCase() === currentUserId.toLowerCase()) {
+      logger.warn("Finder attempted to claim own found item", "ClaimsAPI", {
+        currentUserId,
+        foundReportId: targetFound.id,
+        finderUserId,
+      });
       return NextResponse.json(
         {
           success: false,
@@ -59,12 +65,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Verify Source LOST report ownership (if lostReportId provided)
+    // Step 3: Load & Validate Source LOST report
+    let sourceLost = null;
     let expectedProof = targetFound.distinctiveFeatures || targetFound.description;
-    let sourceLostId = body.lostReportId || null;
 
     if (body.lostReportId) {
-      const sourceLost = await getReportByIdFromDb(body.lostReportId);
+      sourceLost = await getReportByIdFromDb(body.lostReportId);
       if (!sourceLost) {
         return NextResponse.json(
           { success: false, error: "Linked lost report does not exist" },
@@ -72,7 +78,21 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (sourceLost.userId.toLowerCase() !== claimantUid.toLowerCase()) {
+      if (sourceLost.reportType !== "LOST") {
+        return NextResponse.json(
+          { success: false, error: "The linked source report must be of type LOST" },
+          { status: 400 }
+        );
+      }
+
+      // Check that the authenticated user actually owns the lost report
+      const lostOwnerUserId = sourceLost.userId;
+      if (lostOwnerUserId.toLowerCase() !== currentUserId.toLowerCase()) {
+        logger.warn("User attempted to claim with a lost report they do not own", "ClaimsAPI", {
+          currentUserId,
+          lostReportId: sourceLost.id,
+          lostOwnerUserId,
+        });
         return NextResponse.json(
           { success: false, error: "You do not own the linked lost report for this claim" },
           { status: 403 }
@@ -82,8 +102,8 @@ export async function POST(req: NextRequest) {
       expectedProof = sourceLost.privateOwnershipProof || sourceLost.distinctiveFeatures || sourceLost.description;
     }
 
-    // 4. Duplicate Claim check
-    const alreadyClaimed = await hasExistingClaim(body.reportId, claimantUid);
+    // Step 4: Check for existing active claim by this claimant
+    const alreadyClaimed = await hasExistingClaim(targetFound.id, currentUserId);
     if (alreadyClaimed) {
       return NextResponse.json(
         { success: false, error: "You have already submitted an active ownership claim for this item" },
@@ -91,22 +111,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Server-side Private Proof Verification
+    // Step 5: Execute server-side proof verification against private proof
     const verificationResult = verifyOwnershipProof(expectedProof, body.proofDetails);
     const claimId = `claim-${Date.now()}`;
+
+    // Debug logging for verified recovery traceability
+    logger.info("Evaluating ownership claim proof", "ClaimsAPI", {
+      currentUserId,
+      lostReportId: sourceLost?.id,
+      lostOwnerUserId: sourceLost?.userId,
+      foundReportId: targetFound.id,
+      foundFinderUserId: targetFound.userId,
+      resolvedRole: "OWNER",
+      verificationScore: verificationResult.score,
+      verificationPassed: verificationResult.passed,
+    });
 
     await logRecoveryEvent({
       claimId,
       eventType: "OWNER_VERIFICATION_STARTED",
-      actorUserId: claimantUid,
-      metadata: { targetFoundId: targetFound.id, sourceLostId },
+      actorUserId: currentUserId,
+      metadata: { targetFoundId: targetFound.id, sourceLostId: sourceLost?.id },
     });
 
-    if (!verificationResult.passed && body.lostReportId) {
+    if (!verificationResult.passed && sourceLost) {
       await logRecoveryEvent({
         claimId,
         eventType: "OWNER_VERIFICATION_FAILED",
-        actorUserId: claimantUid,
+        actorUserId: currentUserId,
         metadata: { score: verificationResult.score },
       });
 
@@ -119,12 +151,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 6. Create Verified Claim
+    // Step 6: Create Verified Claim Record
     const claim: Claim = {
       id: claimId,
       reportId: targetFound.id,
-      lostReportId: sourceLostId || "",
-      claimantId: claimantUid,
+      lostReportId: sourceLost?.id || "",
+      claimantId: currentUserId,
       finderId: targetFound.userId,
       proofDetails: body.proofDetails.trim(),
       verificationAttempts: 1,
@@ -141,20 +173,14 @@ export async function POST(req: NextRequest) {
     await logRecoveryEvent({
       claimId: savedClaim.id,
       eventType: "OWNER_VERIFICATION_PASSED",
-      actorUserId: claimantUid,
+      actorUserId: currentUserId,
       metadata: { score: verificationResult.score },
     });
 
     await logRecoveryEvent({
       claimId: savedClaim.id,
       eventType: "CLAIM_CREATED",
-      actorUserId: claimantUid,
-    });
-
-    logger.info("Ownership claim verified & created successfully", "ClaimsAPI", {
-      id: savedClaim.id,
-      reportId: savedClaim.reportId,
-      claimantId: savedClaim.claimantId,
+      actorUserId: currentUserId,
     });
 
     return NextResponse.json({ success: true, claim: savedClaim }, { status: 201 });

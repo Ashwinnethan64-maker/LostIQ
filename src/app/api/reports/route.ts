@@ -24,7 +24,13 @@ export async function GET(req: NextRequest) {
       limitCount: 50,
     });
 
-    return NextResponse.json({ success: true, count: reports.length, reports });
+    // Zero-knowledge privacy invariant: Strip private ownership proof from list queries
+    const sanitizedReports = reports.map((r) => ({
+      ...r,
+      privateOwnershipProof: undefined,
+    }));
+
+    return NextResponse.json({ success: true, count: sanitizedReports.length, reports: sanitizedReports });
   } catch (err: any) {
     logger.error("Error fetching reports", "ReportsAPI", err);
     return NextResponse.json({ success: false, error: err.message || "Failed to fetch reports" }, { status: 500 });
