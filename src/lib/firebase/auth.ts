@@ -1,60 +1,62 @@
 import {
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   type User,
 } from "firebase/auth";
 import { getFirebaseAuth } from "./client";
-import { syncUserProfileInDb } from "../supabase/repository";
 import { UserProfile } from "@/types";
 import { logger } from "../logger";
 
 export type { UserProfile };
 
-export async function syncUserProfile(user: User): Promise<UserProfile> {
-  const profile: UserProfile = {
-    id: user.uid, // Canonical Firebase Auth UID
-    email: user.email || "",
-    displayName: user.displayName || user.email?.split("@")[0] || "Campus User",
-    photoURL: user.photoURL || null,
-    role: "user",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+/**
+ * Server-verified session bootstrap.
+ * Exchanges a fresh Firebase ID Token with the server to guarantee
+ * authorization and PostgreSQL user record creation before establishing a session.
+ */
+export async function bootstrapServerSession(user: User): Promise<UserProfile> {
+  const token = await user.getIdToken(true); // Force fresh token
 
-  try {
-    return await syncUserProfileInDb(profile);
-  } catch (err) {
-    logger.error("Failed to sync user profile in database", "AuthUtils", err);
-    return profile;
+  const res = await fetch("/api/auth/bootstrap", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success || !data.user) {
+    throw new Error(data.error || "Server-side session verification failed");
   }
+
+  logger.info("Server verification & user profile bootstrap succeeded", "AuthUtils", { uid: data.user.id });
+  return data.user;
 }
 
-export async function signInWithGoogle(): Promise<UserProfile | null> {
+export async function signInWithGoogle(): Promise<UserProfile> {
   const auth = getFirebaseAuth();
   if (!auth) {
-    logger.warn("Firebase Auth not initialized. Using demo user session.", "AuthUtils");
-    const demoProfile: UserProfile = {
-      id: "demo-user-123",
-      email: "student@campus.edu",
-      displayName: "Alex Rivera",
-      photoURL: null,
-      role: "user",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    return await syncUserProfileInDb(demoProfile);
+    throw new Error("Firebase Auth is not initialized. Please verify configuration.");
   }
 
   try {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
     const cred = await signInWithPopup(auth, provider);
-    return await syncUserProfile(cred.user);
-  } catch (err) {
-    logger.error("Google Sign-In failed", "AuthUtils", err);
+    
+    // Complete real server-side verification and bootstrap before returning
+    return await bootstrapServerSession(cred.user);
+  } catch (err: any) {
+    logger.error("Google Sign-In sequence failed", "AuthUtils", err);
     throw err;
   }
 }

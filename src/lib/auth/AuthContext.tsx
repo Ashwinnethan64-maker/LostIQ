@@ -1,127 +1,132 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { UserProfile, subscribeToAuthState, syncUserProfile, signOutUser, signInWithGoogle } from "@/lib/firebase/auth";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { UserProfile, subscribeToAuthState, bootstrapServerSession, signOutUser, signInWithGoogle } from "@/lib/firebase/auth";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 import { logger } from "@/lib/logger";
+
+export type AuthStateStatus = "INITIALIZING" | "AUTHENTICATING" | "BOOTSTRAPPING" | "AUTHORIZED" | "UNAUTHENTICATED" | "ERROR";
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
+  status: AuthStateStatus;
+  errorMessage: string | null;
   signInGoogle: () => Promise<void>;
-  signInDemoUser: (role?: "user" | "admin") => void;
   logout: () => Promise<void>;
   isAdmin: boolean;
+  getFreshToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  status: "INITIALIZING",
+  errorMessage: null,
   signInGoogle: async () => {},
-  signInDemoUser: () => {},
   logout: async () => {},
   isAdmin: false,
+  getFreshToken: async () => null,
 });
-
-const DEMO_STORAGE_KEY = "campusfind_demo_user";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<AuthStateStatus>("INITIALIZING");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Retrieve a fresh Firebase ID token for secure API requests
+  const getFreshToken = useCallback(async (): Promise<string | null> => {
+    try {
+      const auth = getFirebaseAuth();
+      if (auth?.currentUser) {
+        return await auth.currentUser.getIdToken(false);
+      }
+    } catch (err) {
+      logger.warn("Failed to retrieve fresh Firebase ID token", "AuthContext", err);
+    }
+    return null;
+  }, []);
 
   useEffect(() => {
-    // Check local storage for demo/cached session
-    const cachedDemo = typeof window !== "undefined" ? localStorage.getItem(DEMO_STORAGE_KEY) : null;
-    if (cachedDemo) {
-      try {
-        const parsed = JSON.parse(cachedDemo);
-        setUser(parsed);
-        setLoading(false);
-      } catch {
-        localStorage.removeItem(DEMO_STORAGE_KEY);
-      }
-    }
+    let isMounted = true;
 
     const unsubscribe = subscribeToAuthState(async (firebaseUser) => {
+      if (!isMounted) return;
+
       if (firebaseUser) {
+        setStatus("BOOTSTRAPPING");
         try {
-          const profile = await syncUserProfile(firebaseUser);
-          setUser(profile);
-          if (typeof window !== "undefined") {
-            localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(profile));
+          // Verify with server endpoint & sync PostgreSQL user record
+          const verifiedProfile = await bootstrapServerSession(firebaseUser);
+          if (isMounted) {
+            setUser(verifiedProfile);
+            setStatus("AUTHORIZED");
+            setErrorMessage(null);
           }
-        } catch (err) {
-          logger.error("Error synchronizing user profile", "AuthProvider", err);
+        } catch (err: any) {
+          logger.error("Server-side bootstrap validation failed for active Firebase user", "AuthContext", err);
+          if (isMounted) {
+            setUser(null);
+            setStatus("ERROR");
+            setErrorMessage(err.message || "Failed to verify authenticated session with server.");
+          }
         }
       } else {
-        const demo = typeof window !== "undefined" ? localStorage.getItem(DEMO_STORAGE_KEY) : null;
-        if (!demo) {
+        if (isMounted) {
           setUser(null);
+          setStatus("UNAUTHENTICATED");
+          setErrorMessage(null);
         }
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const signInGoogle = async () => {
-    setLoading(true);
+    setStatus("AUTHENTICATING");
+    setErrorMessage(null);
     try {
       const profile = await signInWithGoogle();
-      if (profile) {
-        setUser(profile);
-        if (typeof window !== "undefined") {
-          localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(profile));
-        }
-      }
-    } catch (err) {
-      logger.error("Sign in failed", "AuthProvider", err);
+      setUser(profile);
+      setStatus("AUTHORIZED");
+    } catch (err: any) {
+      logger.error("Google sign-in sequence failed", "AuthContext", err);
+      setUser(null);
+      setStatus("ERROR");
+      setErrorMessage(err.message || "Google Authentication failed. Please try again.");
       throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signInDemoUser = (role: "user" | "admin" = "user") => {
-    const demoProfile: UserProfile = {
-      id: role === "admin" ? "admin-demo-999" : "student-demo-101",
-      email: role === "admin" ? "security.admin@campus.edu" : "alex.student@campus.edu",
-      displayName: role === "admin" ? "Campus Security Officer" : "Alex Rivera (Student)",
-      photoURL: null,
-      role: role,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setUser(demoProfile);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(demoProfile));
     }
   };
 
   const logout = async () => {
-    setLoading(true);
+    setStatus("INITIALIZING");
     try {
       await signOutUser();
       setUser(null);
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(DEMO_STORAGE_KEY);
-      }
+      setStatus("UNAUTHENTICATED");
+      setErrorMessage(null);
     } catch (err) {
-      logger.error("Logout error", "AuthProvider", err);
-    } finally {
-      setLoading(false);
+      logger.error("Logout error", "AuthContext", err);
     }
   };
+
+  const loading = status === "INITIALIZING" || status === "AUTHENTICATING" || status === "BOOTSTRAPPING";
 
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
+        status,
+        errorMessage,
         signInGoogle,
-        signInDemoUser,
         logout,
         isAdmin: user?.role === "admin",
+        getFreshToken,
       }}
     >
       {children}

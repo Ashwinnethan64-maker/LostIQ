@@ -1,49 +1,53 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Shield, User, Loader2, Sparkles, ArrowRight } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 function LoginForm() {
-  const { user, signInGoogle, signInDemoUser, loading } = useAuth();
+  const { user, signInGoogle, status, errorMessage } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  if (user) {
-    router.push(callbackUrl);
-    return null;
-  }
+  useEffect(() => {
+    // Only redirect when authentication AND server bootstrap are 100% complete
+    if (status === "AUTHORIZED" && user) {
+      router.push(callbackUrl);
+    }
+  }, [status, user, router, callbackUrl]);
 
   const handleGoogleSignIn = async () => {
     try {
-      setGoogleLoading(true);
-      setAuthError(null);
+      setSubmitting(true);
+      setLocalError(null);
       await signInGoogle();
-      router.push(callbackUrl);
+      // Router redirection is triggered by the useEffect when status becomes 'AUTHORIZED'
     } catch (err: any) {
-      setAuthError(err.message || "Failed to sign in with Google.");
+      // Ignore user-cancelled popup closes gracefully
+      if (err.code === "auth/popup-closed-by-user") {
+        setLocalError("Sign-in window closed before completing authentication.");
+      } else {
+        setLocalError(err.message || "Failed to sign in with Google.");
+      }
     } finally {
-      setGoogleLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const handleDemoSignIn = (role: "user" | "admin") => {
-    signInDemoUser(role);
-    router.push(callbackUrl);
-  };
+  const isVerifying = status === "AUTHENTICATING" || status === "BOOTSTRAPPING";
 
   return (
     <div className="w-full max-w-lg mx-auto border-8 border-black bg-white p-8 sm:p-12 shadow-neo-xl space-y-8">
       
       {/* Brand & Editorial Header */}
       <div className="text-center space-y-3 flex flex-col items-center">
-        <div className="p-2 border-4 border-black bg-secondary shadow-neo-sm rotate-[-2deg]">
+        <div className="p-2 border-4 border-black bg-[#FFD93D] shadow-neo-sm rotate-[-2deg]">
           <Image
             src="/brand/logo/lostiq-mark.webp"
             alt="LostIQ"
@@ -53,16 +57,33 @@ function LoginForm() {
           />
         </div>
         <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black leading-none">
-          SIGN IN TO <span className="bg-primary text-white px-2 py-0.5 border-3 border-black inline-block rotate-1">LOSTIQ</span>
+          SIGN IN TO <span className="bg-[#FF6B6B] text-white px-2 py-0.5 border-3 border-black inline-block rotate-1">LOSTIQ</span>
         </h1>
         <p className="text-xs sm:text-sm font-bold text-black/80 max-w-sm">
           Access automated Gemini AI matching, report management, and secure item claims.
         </p>
       </div>
 
-      {authError && (
-        <div className="border-4 border-black bg-primary text-white p-4 font-black text-xs uppercase shadow-neo-sm">
-          {authError}
+      {/* Error Displays */}
+      {(localError || errorMessage) && (
+        <div className="border-4 border-black bg-[#FF6B6B] text-white p-4 font-black text-xs uppercase flex items-center gap-3 shadow-neo-sm">
+          <AlertCircle className="h-5 w-5 flex-shrink-0" />
+          <span>{localError || errorMessage}</span>
+        </div>
+      )}
+
+      {/* Auth State In-Flight Banner */}
+      {isVerifying && (
+        <div className="border-4 border-black bg-[#FFD93D] text-black p-4 space-y-2 text-center shadow-neo-sm">
+          <Loader2 className="h-6 w-6 animate-spin mx-auto text-black" />
+          <div className="font-black text-xs uppercase tracking-wider">
+            {status === "AUTHENTICATING"
+              ? "AUTHENTICATING WITH GOOGLE..."
+              : "VERIFYING SESSION & BOOTSTRAPPING USER..."}
+          </div>
+          <div className="text-[10px] font-bold text-black/70 uppercase">
+            EXCHANGING VERIFIED FIREBASE CREDENTIALS
+          </div>
         </div>
       )}
 
@@ -70,11 +91,11 @@ function LoginForm() {
       <div className="space-y-4">
         <button
           onClick={handleGoogleSignIn}
-          disabled={googleLoading || loading}
-          className="neo-button w-full py-4 text-sm font-black bg-white text-black border-4 border-black hover:bg-secondary shadow-neo"
+          disabled={submitting || isVerifying}
+          className="neo-button w-full py-4 text-sm font-black bg-white text-black border-4 border-black hover:bg-[#FFD93D] shadow-neo transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {googleLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+          {submitting || isVerifying ? (
+            <Loader2 className="h-5 w-5 animate-spin mr-2 inline" />
           ) : (
             <svg className="h-5 w-5 mr-3 inline" viewBox="0 0 24 24">
               <path
@@ -99,34 +120,12 @@ function LoginForm() {
         </button>
       </div>
 
-      {/* Evaluator Instant Access Buttons */}
-      <div className="space-y-3 pt-6 border-t-4 border-black">
-        <div className="flex items-center justify-between text-xs font-black uppercase text-black/70">
-          <span>HACKATHON EVALUATOR INSTANT LOGIN:</span>
-          <span className="text-[10px] bg-secondary px-1.5 border border-black">1-CLICK</span>
+      {/* Real Security Enforcement Banner */}
+      <div className="border-3 border-black bg-[#FFFDF5] p-3 text-[11px] font-black uppercase text-center space-y-1">
+        <div className="text-black">⚡ REAL-TIME IDENTITY VERIFICATION</div>
+        <div className="text-black/60 text-[10px]">
+          SESSIONS ARE VALIDATED SERVER-SIDE WITH GOOGLE &amp; SUPABASE POSTGRESQL
         </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => handleDemoSignIn("user")}
-            className="neo-button py-3 text-xs font-black bg-secondary text-black border-3 border-black hover:bg-secondary-hover shadow-neo-sm"
-          >
-            <User className="h-4 w-4 mr-1.5 inline" />
-            STUDENT ACCOUNT
-          </button>
-          <button
-            onClick={() => handleDemoSignIn("admin")}
-            className="neo-button py-3 text-xs font-black bg-tertiary text-black border-3 border-black hover:bg-tertiary-hover shadow-neo-sm"
-          >
-            <Shield className="h-4 w-4 mr-1.5 inline" />
-            CAMPUS ADMIN
-          </button>
-        </div>
-      </div>
-
-      {/* Security Note */}
-      <div className="border-3 border-black bg-canvas p-3 text-[11px] font-black uppercase text-center">
-        ⚡ SECURED BY FIREBASE AUTH &amp; SUPABASE POSTGRESQL
       </div>
 
     </div>

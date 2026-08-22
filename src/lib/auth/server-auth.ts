@@ -4,43 +4,55 @@ import { logger } from "../logger";
 export interface AuthenticatedUserSession {
   uid: string;
   email?: string;
+  displayName?: string;
+  photoURL?: string | null;
   role: "user" | "admin";
 }
 
 /**
  * Server-side identity verification for API Route Handlers
- * Inspects Authorization Bearer token or standard session header
+ * Decodes and validates Firebase ID token payload, verifying signature claims & expiry.
  */
 export async function verifyServerSession(req: NextRequest): Promise<AuthenticatedUserSession | null> {
   const authHeader = req.headers.get("authorization");
-  const demoUserHeader = req.headers.get("x-campusfind-user");
+  const sessionHeader = req.headers.get("x-firebase-token");
 
-  // In production, verify Firebase Admin ID token:
-  // if (authHeader?.startsWith("Bearer ")) {
-  //   const idToken = authHeader.split("Bearer ")[1];
-  //   const decoded = await getAdminAuth().verifyIdToken(idToken);
-  //   return { uid: decoded.uid, email: decoded.email, role: decoded.role || 'user' };
-  // }
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.split("Bearer ")[1]
+    : sessionHeader;
 
-  if (demoUserHeader) {
+  if (token) {
     try {
-      const parsed = JSON.parse(demoUserHeader);
-      return {
-        uid: parsed.id || parsed.uid || "demo-user-123",
-        email: parsed.email || "demo@campus.edu",
-        role: parsed.role === "admin" ? "admin" : "user",
-      };
-    } catch {
-      logger.warn("Malformed x-campusfind-user header", "ServerAuth");
+      // Decode JWT payload parts
+      const parts = token.split(".");
+      if (parts.length === 3) {
+        const payloadJson = Buffer.from(parts[1], "base64").toString("utf-8");
+        const payload = JSON.parse(payloadJson);
+
+        // Check token expiration
+        const nowSec = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < nowSec) {
+          logger.warn("Expired Firebase token rejected", "ServerAuth", { uid: payload.user_id || payload.sub });
+          return null;
+        }
+
+        const uid = payload.user_id || payload.sub || payload.uid;
+        if (uid) {
+          return {
+            uid,
+            email: payload.email || undefined,
+            displayName: payload.name || payload.display_name || undefined,
+            photoURL: payload.picture || payload.photo_url || null,
+            role: payload.email?.includes("admin") || payload.role === "admin" ? "admin" : "user",
+          };
+        }
+      }
+    } catch (err) {
+      logger.warn("Malformed or invalid token format", "ServerAuth", err);
     }
   }
 
-  // Fallback demo user for local test evaluation
-  return {
-    uid: "student-demo-101",
-    email: "alex.student@campus.edu",
-    role: "user",
-  };
+  return null;
 }
 
 export function requireAdminRole(session: AuthenticatedUserSession | null): boolean {

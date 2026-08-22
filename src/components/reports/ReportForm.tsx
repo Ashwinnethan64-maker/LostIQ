@@ -36,7 +36,7 @@ const CAMPUS_ZONES = [
 ];
 
 export function ReportForm({ initialType }: ReportFormProps) {
-  const { user } = useAuth();
+  const { user, getFreshToken } = useAuth();
   const router = useRouter();
 
   const [reportType, setReportType] = useState<ReportType>(initialType);
@@ -141,9 +141,15 @@ export function ReportForm({ initialType }: ReportFormProps) {
         reportedAt: `${reportDate}T${reportTime}:00.000Z`,
       };
 
+      const token = await getFreshToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const res = await fetch("/api/reports/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(payload),
       });
 
