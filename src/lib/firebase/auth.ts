@@ -57,6 +57,15 @@ export async function signInWithGoogle(): Promise<UserProfile> {
     return await bootstrapServerSession(cred.user);
   } catch (err: any) {
     logger.error("Google Sign-In sequence failed", "AuthUtils", err);
+
+    // Provide friendly, actionable domain authorization guidance
+    if (err.code === "auth/unauthorized-domain") {
+      const currentHost = typeof window !== "undefined" ? window.location.hostname : "localhost";
+      throw new Error(
+        `Firebase Error: '${currentHost}' is not in Firebase Console Authorized Domains. Please add '${currentHost}' in Firebase Console > Authentication > Settings > Authorized Domains, or sign in via authorized port.`
+      );
+    }
+
     throw err;
   }
 }
