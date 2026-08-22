@@ -89,7 +89,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 6. Duplicate Claim Prevention
+    // 6. Authorization Rule: Verify Lost Report creator if lostReportId is provided
+    if (body.lostReportId) {
+      const lostReport = await getReportByIdFromDb(body.lostReportId);
+      if (lostReport && lostReport.userId.toLowerCase() !== claimantUid.toLowerCase()) {
+        logger.warn("Claim rejected: claimant does not own the linked lost report", "ClaimsAPI", {
+          lostReportId: body.lostReportId,
+          lostReportOwner: lostReport.userId,
+          claimantUid,
+        });
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Authorization error: You do not own the linked lost report for this claim",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 7. Duplicate Claim Prevention
     const alreadyClaimed = await hasExistingClaim(body.reportId, claimantUid);
     if (alreadyClaimed) {
       logger.warn("Duplicate claim prevented", "ClaimsAPI", {
@@ -102,7 +121,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 7. Create and persist Claim record
+    // 8. Create and persist Claim record
     const claim: Claim = {
       id: `claim-${Date.now()}`,
       reportId: body.reportId,

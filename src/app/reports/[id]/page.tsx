@@ -67,7 +67,9 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
 
   const isLost = report.reportType === "LOST";
   const isFound = report.reportType === "FOUND";
-  const isCreator = user?.id && report.userId && user.id.toLowerCase() === report.userId.toLowerCase();
+  const currentUid = user?.id ? user.id.toLowerCase() : "";
+  const reportUid = report.userId ? report.userId.toLowerCase() : "";
+  const isCreator = currentUid !== "" && reportUid !== "" && currentUid === reportUid;
 
   return (
     <div className="space-y-10 py-4 max-w-6xl mx-auto">
@@ -258,9 +260,18 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
         ) : (
           <div className="space-y-6">
             {matches.map((candidate) => {
-              const targetIsFound = candidate.targetReport.reportType === "FOUND";
-              // Only authorized owner (creator of LOST report) can claim the matching FOUND report
-              const canClaimThisTarget = isLost && isCreator && targetIsFound;
+              // Exact Business Rule:
+              // For every match pair (LOST report <-> FOUND report):
+              // - lostReport.userId = OWNER CANDIDATE (Only user who can submit ownership claim)
+              // - foundReport.userId = FINDER (Waiting for owner)
+              const lostReportUser = isLost ? report.userId : candidate.targetReport.userId;
+              const foundReportUser = isFound ? report.userId : candidate.targetReport.userId;
+
+              const lostUid = lostReportUser ? lostReportUser.toLowerCase() : "";
+              const foundUid = foundReportUser ? foundReportUser.toLowerCase() : "";
+
+              const isLostOwner = currentUid !== "" && currentUid === lostUid;
+              const isFinder = currentUid !== "" && currentUid === foundUid;
 
               return (
                 <div
@@ -314,7 +325,7 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
                     </div>
                   </div>
 
-                  {/* Bottom Action Footer */}
+                  {/* Bottom Action Footer: Context-Aware Authorization at Source */}
                   <div className="pt-4 border-t-3 border-black flex flex-wrap items-center justify-between gap-3">
                     <Link
                       href={`/reports/${candidate.targetReport.id}`}
@@ -323,20 +334,22 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
                       INSPECT TARGET DOSSIER <ArrowRight className="ml-1.5 h-4 w-4 inline" />
                     </Link>
 
-                    {canClaimThisTarget ? (
+                    {isLostOwner ? (
                       <button
                         onClick={() => {
-                          setClaimTarget({ id: candidate.targetReport.id, title: candidate.targetReport.title });
+                          const targetFoundId = isFound ? report.id : candidate.targetReport.id;
+                          const targetFoundTitle = isFound ? report.title : candidate.targetReport.title;
+                          setClaimTarget({ id: targetFoundId, title: targetFoundTitle });
                           setIsClaimModalOpen(true);
                         }}
-                        className="neo-button px-5 py-2 text-xs bg-[#FF6B6B] text-white border-3 border-black hover:bg-[#FF5252] shadow-neo-sm"
+                        className="neo-button px-5 py-2 text-xs bg-[#FF6B6B] text-white border-3 border-black hover:bg-[#FF5252] shadow-neo-sm font-black"
                       >
                         <ShieldCheck className="mr-1.5 h-4 w-4 inline" />
                         CLAIM &amp; RECOVER ITEM
                       </button>
-                    ) : isFound && isCreator ? (
-                      <span className="border-3 border-black bg-[#FFD93D] text-black px-4 py-2 text-xs font-black uppercase">
-                        WAITING FOR OWNER TO INITIATE CLAIM
+                    ) : isFinder ? (
+                      <span className="border-3 border-black bg-[#FFD93D] text-black px-4 py-2 text-xs font-black uppercase shadow-neo-sm">
+                        WAITING FOR OWNER
                       </span>
                     ) : (
                       <span className="border-3 border-black bg-[#E2E8F0] text-black/70 px-4 py-2 text-xs font-black uppercase">
@@ -352,7 +365,7 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
         )}
       </div>
 
-      {/* Ownership Claim Dialog */}
+      {/* Ownership Claim Dialog: Only mounted for authorized claimant */}
       {claimTarget && (
         <ClaimModal
           reportId={claimTarget.id}

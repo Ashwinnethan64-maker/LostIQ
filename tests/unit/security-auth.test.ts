@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { verifyServerSession, requireAdminRole, AuthenticatedUserSession } from "@/lib/auth/server-auth";
 import { NextRequest } from "next/server";
 import { POST as createClaimHandler } from "@/app/api/claims/create/route";
+import { createReportInDb } from "@/lib/supabase/repository";
+import { Report } from "@/types";
 
 describe("Security and Server-Side Token Verification", () => {
   it("rejects requests without authorization headers", async () => {
@@ -150,5 +152,52 @@ describe("Claims Authorization and Ownership Verification", () => {
     expect(res.status).toBe(403);
     const body = await res.json();
     expect(body.error).toContain("finder for this item");
+  });
+
+  it("prevents users from claiming with a lost report they do not own with 403", async () => {
+    // Create an explicit lost report owned by 'user-owner-alpha'
+    const testLostReport: Report = {
+      id: "rep-test-lost-wallet-444",
+      reportType: "LOST",
+      userId: "user-owner-alpha",
+      title: "Lost Leather Wallet",
+      description: "Lost brown wallet",
+      category: "id_cards",
+      location: { name: "Quad" },
+      reportedAt: new Date().toISOString(),
+      status: "OPEN",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await createReportInDb(testLostReport);
+
+    // Unrelated User C tries to pass lostReportId owned by user-owner-alpha
+    const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64");
+    const payload = Buffer.from(
+      JSON.stringify({
+        user_id: "unrelated-user-c",
+        email: "user.c@campus.edu",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      })
+    ).toString("base64");
+    const token = `${header}.${payload}.sig`;
+
+    const req = new NextRequest("http://localhost:3005/api/claims/create", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        reportId: "rep-seed-002",
+        lostReportId: "rep-test-lost-wallet-444", // Owned by user-owner-alpha
+        proofDetails: "Trying to claim without owning the lost report.",
+      }),
+    });
+
+    const res = await createClaimHandler(req);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toContain("You do not own the linked lost report");
   });
 });
