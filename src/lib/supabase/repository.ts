@@ -47,29 +47,39 @@ if (!globalForReports.localTokensStore) globalForReports.localTokensStore = loca
 if (!globalForReports.localEventsStore) globalForReports.localEventsStore = localEventsStore;
 
 function initStoreFromPersistence() {
-  if (localReportsStore.size === 0) {
-    const savedReports = loadReportsFromFile();
-    for (const r of savedReports) localReportsStore.set(r.id, r);
+  const savedReports = loadReportsFromFile();
+  for (const r of savedReports) {
+    if (!localReportsStore.has(r.id)) {
+      localReportsStore.set(r.id, r);
+    }
   }
 
-  if (localUsersStore.size === 0) {
-    const savedUsers = loadUsersFromFile();
-    for (const u of savedUsers) localUsersStore.set(u.id, u);
+  const savedUsers = loadUsersFromFile();
+  for (const u of savedUsers) {
+    if (!localUsersStore.has(u.id)) {
+      localUsersStore.set(u.id, u);
+    }
   }
 
-  if (localClaimsStore.size === 0) {
-    const savedClaims = loadClaimsFromFile();
-    for (const c of savedClaims) localClaimsStore.set(c.id, c);
+  const savedClaims = loadClaimsFromFile();
+  for (const c of savedClaims) {
+    if (!localClaimsStore.has(c.id)) {
+      localClaimsStore.set(c.id, c);
+    }
   }
 
-  if (localTokensStore.size === 0) {
-    const savedTokens = loadTokensFromFile();
-    for (const t of savedTokens) localTokensStore.set(t.id, t);
+  const savedTokens = loadTokensFromFile();
+  for (const t of savedTokens) {
+    if (!localTokensStore.has(t.id)) {
+      localTokensStore.set(t.id, t);
+    }
   }
 
-  if (localEventsStore.size === 0) {
-    const savedEvents = loadEventsFromFile();
-    for (const e of savedEvents) localEventsStore.set(e.id, e);
+  const savedEvents = loadEventsFromFile();
+  for (const e of savedEvents) {
+    if (!localEventsStore.has(e.id)) {
+      localEventsStore.set(e.id, e);
+    }
   }
 }
 
@@ -101,10 +111,11 @@ function mapDbRowToReport(row: any): Report {
 
 // 1. Sync User Profile
 export async function syncUserProfileInDb(profile: UserProfile): Promise<UserProfile> {
-  const supabase = getSupabaseClient();
+  initStoreFromPersistence();
   localUsersStore.set(profile.id, profile);
   saveUsersToFile(Array.from(localUsersStore.values()));
 
+  const supabase = getSupabaseClient();
   if (supabase) {
     try {
       await supabase.from("users").upsert({
@@ -125,10 +136,11 @@ export async function syncUserProfileInDb(profile: UserProfile): Promise<UserPro
 
 // 2. Create Report
 export async function createReportInDb(report: Report): Promise<Report> {
-  const supabase = getSupabaseClient();
+  initStoreFromPersistence();
   localReportsStore.set(report.id, report);
   saveReportsToFile(Array.from(localReportsStore.values()));
 
+  const supabase = getSupabaseClient();
   if (supabase) {
     try {
       await supabase.from("reports").insert({
@@ -255,10 +267,11 @@ export async function getReportsFromDb(filters?: {
 
 // 6. Create / Update Claims
 export async function createClaimInDb(claim: Claim): Promise<Claim> {
-  const supabase = getSupabaseClient();
+  initStoreFromPersistence();
   localClaimsStore.set(claim.id, claim);
   saveClaimsToFile(Array.from(localClaimsStore.values()));
 
+  const supabase = getSupabaseClient();
   if (supabase) {
     try {
       await supabase.from("claims").insert({
@@ -362,6 +375,7 @@ export async function getClaimsFromDb(filters?: {
 }
 
 export async function hasExistingClaim(reportId: string, claimantId: string): Promise<boolean> {
+  initStoreFromPersistence();
   const targetClaimant = claimantId.toLowerCase();
   for (const c of Array.from(localClaimsStore.values())) {
     if (c.reportId === reportId && c.claimantId.toLowerCase() === targetClaimant && c.status !== "CANCELLED" && c.status !== "REJECTED") {

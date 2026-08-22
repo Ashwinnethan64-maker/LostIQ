@@ -175,5 +175,37 @@
     "updatedAt": "2026-08-22T18:27:16.873Z",
     "finderConfirmedAt": "2026-08-22T18:27:16.867Z",
     "ownerReceivedAt": "2026-08-22T18:27:16.872Z"
+  },
+  {
+    "id": "claim-1787423930577",
+    "reportId": "rep-found-earbuds-1787423930569",
+    "lostReportId": "",
+    "claimantId": "claimant-uid-1787423930573",
+    "finderId": "security-officer-99",
+    "proofDetails": "Distinctive serial number ending in 8421 and sticker on case.",
+    "verificationAttempts": 1,
+    "verificationStatus": "PASSED",
+    "handoverStatus": "NONE",
+    "status": "VERIFIED",
+    "verifiedAt": "2026-08-22T18:38:50.583Z",
+    "createdAt": "2026-08-22T18:38:50.583Z",
+    "updatedAt": "2026-08-22T18:38:50.583Z"
+  },
+  {
+    "id": "claim-1787423930653",
+    "reportId": "rep-found-1787423930608",
+    "lostReportId": "rep-lost-1787423930608",
+    "claimantId": "owner-uid-1787423930601",
+    "finderId": "finder-uid-1787423930601",
+    "proofDetails": "scratch near 3 o'clock position on bezel",
+    "verificationAttempts": 1,
+    "verificationStatus": "PASSED",
+    "handoverStatus": "COMPLETED",
+    "status": "COMPLETED",
+    "verifiedAt": "2026-08-22T18:38:50.656Z",
+    "createdAt": "2026-08-22T18:38:50.656Z",
+    "updatedAt": "2026-08-22T18:38:50.697Z",
+    "finderConfirmedAt": "2026-08-22T18:38:50.687Z",
+    "ownerReceivedAt": "2026-08-22T18:38:50.696Z"
   }
 ]
