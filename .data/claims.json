@@ -1,24 +1,13 @@
 [
   {
-    "id": "claim-1787420279385",
-    "reportId": "rep-seed-001",
+    "id": "claim-1787420925948",
+    "reportId": "rep-found-earbuds-1787420925941",
     "lostReportId": null,
-    "claimantId": "claimant-uid-sam-999",
-    "finderId": "campus-security-officer",
+    "claimantId": "claimant-uid-1787420925944",
+    "finderId": "security-officer-99",
     "proofDetails": "Distinctive serial number ending in 8421 and sticker on case.",
     "status": "PENDING",
-    "createdAt": "2026-08-22T17:37:59.385Z",
-    "updatedAt": "2026-08-22T17:37:59.385Z"
-  },
-  {
-    "id": "claim-1787420309909",
-    "reportId": "rep-seed-001",
-    "lostReportId": null,
-    "claimantId": "claimant-uid-1787420309907",
-    "finderId": "campus-security-officer",
-    "proofDetails": "Distinctive serial number ending in 8421 and sticker on case.",
-    "status": "PENDING",
-    "createdAt": "2026-08-22T17:38:29.909Z",
-    "updatedAt": "2026-08-22T17:38:29.909Z"
+    "createdAt": "2026-08-22T17:48:45.948Z",
+    "updatedAt": "2026-08-22T17:48:45.948Z"
   }
 ]

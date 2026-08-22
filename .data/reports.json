@@ -1,82 +1,5 @@
 [
   {
-    "id": "rep-seed-001",
-    "reportType": "FOUND",
-    "userId": "campus-security-officer",
-    "title": "Black Sony Wireless Earbuds & Case",
-    "description": "Found black Sony WF-1000XM4 wireless earbuds with charging case near the 2nd floor library study carrels. Case has a minor surface scratch on the top lid.",
-    "category": "electronics",
-    "imageUrl": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80",
-    "location": {
-      "name": "Central Library 2nd Floor Study Commons",
-      "zone": "Central Library & Study Commons"
-    },
-    "reportedAt": "2026-08-22T17:37:59.255Z",
-    "status": "OPEN",
-    "ai": {
-      "summary": "Black Sony wireless earbuds in matte charging case with minor scratch.",
-      "category": "electronics",
-      "objectType": "wireless earbuds",
-      "brand": "Sony",
-      "color": "black",
-      "attributes": [
-        "charging case",
-        "matte black finish",
-        "scratch on lid"
-      ],
-      "keywords": [
-        "sony",
-        "earbuds",
-        "wireless",
-        "audio",
-        "case",
-        "black"
-      ],
-      "extractedAt": "2026-08-22T17:37:59.255Z"
-    },
-    "createdAt": "2026-08-22T17:37:59.255Z",
-    "updatedAt": "2026-08-22T17:37:59.255Z"
-  },
-  {
-    "id": "rep-seed-002",
-    "reportType": "FOUND",
-    "userId": "student-alex",
-    "title": "Brown Leather Fossil Bi-fold Wallet",
-    "description": "Found brown leather wallet under a table at Student Center dining hall. Contains student transit pass.",
-    "category": "id_cards",
-    "imageUrl": "https://images.unsplash.com/photo-1627123424574-724758594e93?w=800&auto=format&fit=crop&q=80",
-    "location": {
-      "name": "Student Dining Center Lower Level",
-      "zone": "Student Center & Dining Hall"
-    },
-    "reportedAt": "2026-08-21T17:37:59.257Z",
-    "status": "OPEN",
-    "ai": {
-      "summary": "Distressed brown leather bifold wallet with visible card slots.",
-      "category": "id_cards",
-      "objectType": "wallet",
-      "brand": "Fossil",
-      "color": "brown",
-      "attributes": [
-        "leather",
-        "bifold",
-        "card slots",
-        "distressed finish"
-      ],
-      "keywords": [
-        "wallet",
-        "leather",
-        "brown",
-        "fossil",
-        "cards",
-        "cash"
-      ],
-      "extractedAt": "2026-08-21T17:37:59.257Z"
-    },
-    "createdAt": "2026-08-21T17:37:59.257Z",
-    "updatedAt": "2026-08-21T17:37:59.257Z"
-  },
-  {
     "id": "rep-user-a-watch",
     "reportType": "LOST",
     "userId": "firebase-uid-user-a-12345",
@@ -90,10 +13,10 @@
       "name": "Quad Bench",
       "zone": "Central Academic Quad"
     },
-    "reportedAt": "2026-08-22T17:38:29.811Z",
+    "reportedAt": "2026-08-22T17:48:45.838Z",
     "status": "OPEN",
-    "createdAt": "2026-08-22T17:38:29.811Z",
-    "updatedAt": "2026-08-22T17:38:29.811Z"
+    "createdAt": "2026-08-22T17:48:45.838Z",
+    "updatedAt": "2026-08-22T17:48:45.838Z"
   },
   {
     "id": "rep-user-b-bag",
@@ -106,13 +29,58 @@
       "name": "Library 1st floor",
       "zone": "Central Library & Study Commons"
     },
-    "reportedAt": "2026-08-22T17:38:29.811Z",
+    "reportedAt": "2026-08-22T17:48:45.838Z",
     "status": "OPEN",
-    "createdAt": "2026-08-22T17:38:29.811Z",
-    "updatedAt": "2026-08-22T17:38:29.811Z"
+    "createdAt": "2026-08-22T17:48:45.838Z",
+    "updatedAt": "2026-08-22T17:48:45.838Z"
   },
   {
-    "id": "rep-test-lost-wallet-444",
+    "id": "rep-found-earbuds-1787420925941",
+    "reportType": "FOUND",
+    "userId": "security-officer-99",
+    "title": "Found Wireless Earbuds",
+    "description": "Found black wireless earbuds",
+    "category": "electronics",
+    "location": {
+      "name": "Library"
+    },
+    "reportedAt": "2026-08-22T17:48:45.941Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:48:45.941Z",
+    "updatedAt": "2026-08-22T17:48:45.941Z"
+  },
+  {
+    "id": "rep-found-camera-1787420925950",
+    "reportType": "FOUND",
+    "userId": "finder-officer-77",
+    "title": "Found Camera",
+    "description": "Found camera",
+    "category": "electronics",
+    "location": {
+      "name": "Quad"
+    },
+    "reportedAt": "2026-08-22T17:48:45.950Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:48:45.950Z",
+    "updatedAt": "2026-08-22T17:48:45.950Z"
+  },
+  {
+    "id": "rep-found-wallet-1787420925954",
+    "reportType": "FOUND",
+    "userId": "finder-alex",
+    "title": "Found Wallet",
+    "description": "Found brown wallet",
+    "category": "id_cards",
+    "location": {
+      "name": "Dining"
+    },
+    "reportedAt": "2026-08-22T17:48:45.954Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:48:45.954Z",
+    "updatedAt": "2026-08-22T17:48:45.954Z"
+  },
+  {
+    "id": "rep-test-lost-wallet-1787420925955",
     "reportType": "LOST",
     "userId": "user-owner-alpha",
     "title": "Lost Leather Wallet",
@@ -121,9 +89,9 @@
     "location": {
       "name": "Quad"
     },
-    "reportedAt": "2026-08-22T17:38:29.914Z",
+    "reportedAt": "2026-08-22T17:48:45.955Z",
     "status": "OPEN",
-    "createdAt": "2026-08-22T17:38:29.914Z",
-    "updatedAt": "2026-08-22T17:38:29.914Z"
+    "createdAt": "2026-08-22T17:48:45.955Z",
+    "updatedAt": "2026-08-22T17:48:45.955Z"
   }
 ]

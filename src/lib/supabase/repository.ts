@@ -10,8 +10,7 @@ import {
   saveClaimsToFile,
 } from "../db/persistence";
 
-// Seed & Local in-memory store for fallback/offline/testing resilience
-// Use globalThis to persist across Next.js dev server hot-reloads and API route requests
+// Persistent store across Next.js dev server hot-reloads and API route requests
 const globalForReports = globalThis as unknown as {
   localReportsStore?: Map<string, Report>;
   localUsersStore?: Map<string, UserProfile>;
@@ -50,76 +49,6 @@ function initStoreFromPersistence() {
 }
 
 initStoreFromPersistence();
-
-function ensureSeedData() {
-  initStoreFromPersistence();
-  if (localReportsStore.size > 0) return;
-
-  const now = new Date().toISOString();
-  const yesterday = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-
-  const seed1: Report = {
-    id: "rep-seed-001",
-    reportType: "FOUND",
-    userId: "campus-security-officer",
-    title: "Black Sony Wireless Earbuds & Case",
-    description: "Found black Sony WF-1000XM4 wireless earbuds with charging case near the 2nd floor library study carrels. Case has a minor surface scratch on the top lid.",
-    category: "electronics",
-    imageUrl: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80",
-    location: {
-      name: "Central Library 2nd Floor Study Commons",
-      zone: "Central Library & Study Commons",
-    },
-    reportedAt: now,
-    status: "OPEN",
-    ai: {
-      summary: "Black Sony wireless earbuds in matte charging case with minor scratch.",
-      category: "electronics",
-      objectType: "wireless earbuds",
-      brand: "Sony",
-      color: "black",
-      attributes: ["charging case", "matte black finish", "scratch on lid"],
-      keywords: ["sony", "earbuds", "wireless", "audio", "case", "black"],
-      extractedAt: now,
-    },
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  const seed2: Report = {
-    id: "rep-seed-002",
-    reportType: "FOUND",
-    userId: "student-alex",
-    title: "Brown Leather Fossil Bi-fold Wallet",
-    description: "Found brown leather wallet under a table at Student Center dining hall. Contains student transit pass.",
-    category: "id_cards",
-    imageUrl: "https://images.unsplash.com/photo-1627123424574-724758594e93?w=800&auto=format&fit=crop&q=80",
-    location: {
-      name: "Student Dining Center Lower Level",
-      zone: "Student Center & Dining Hall",
-    },
-    reportedAt: yesterday,
-    status: "OPEN",
-    ai: {
-      summary: "Distressed brown leather bifold wallet with visible card slots.",
-      category: "id_cards",
-      objectType: "wallet",
-      brand: "Fossil",
-      color: "brown",
-      attributes: ["leather", "bifold", "card slots", "distressed finish"],
-      keywords: ["wallet", "leather", "brown", "fossil", "cards", "cash"],
-      extractedAt: yesterday,
-    },
-    createdAt: yesterday,
-    updatedAt: yesterday,
-  };
-
-  localReportsStore.set(seed1.id, seed1);
-  localReportsStore.set(seed2.id, seed2);
-  saveReportsToFile(Array.from(localReportsStore.values()));
-}
-
-ensureSeedData();
 
 // Helper to map Supabase database row to Report TypeScript entity
 function mapDbRowToReport(row: any): Report {
@@ -219,7 +148,7 @@ export async function createReportInDb(report: Report): Promise<Report> {
 
 // 3. Get Report by ID
 export async function getReportByIdFromDb(reportId: string): Promise<Report | null> {
-  ensureSeedData();
+  initStoreFromPersistence();
   const supabase = getSupabaseClient();
 
   if (supabase) {
@@ -241,17 +170,16 @@ export async function getReportByIdFromDb(reportId: string): Promise<Report | nu
   return localReportsStore.get(reportId) || null;
 }
 
-// 4. Get Reports with Filters (Permanent UID & Email-aware fallback matching)
+// 4. Get Reports with Filters (Permanent UID matching)
 export async function getReportsFromDb(filters?: {
   reportType?: ReportType;
   category?: string;
   status?: ReportStatus;
   search?: string;
   userId?: string;
-  userEmail?: string;
   limitCount?: number;
 }): Promise<Report[]> {
-  ensureSeedData();
+  initStoreFromPersistence();
   const supabase = getSupabaseClient();
   const maxLimit = filters?.limitCount || 50;
 
@@ -300,7 +228,7 @@ export async function getReportsFromDb(filters?: {
   return items.slice(0, maxLimit);
 }
 
-// 5. Create & Check Claims
+// 5. Create & Query Claims
 export async function createClaimInDb(claim: Claim): Promise<Claim> {
   const supabase = getSupabaseClient();
   localClaimsStore.set(claim.id, claim);
@@ -311,7 +239,9 @@ export async function createClaimInDb(claim: Claim): Promise<Claim> {
       const { error } = await supabase.from("claims").insert({
         id: claim.id,
         report_id: claim.reportId,
+        lost_report_id: claim.lostReportId || null,
         claimant_id: claim.claimantId,
+        finder_id: claim.finderId || null,
         proof_details: claim.proofDetails,
         status: claim.status,
         created_at: claim.createdAt,
@@ -329,6 +259,57 @@ export async function createClaimInDb(claim: Claim): Promise<Claim> {
   }
 
   return claim;
+}
+
+export async function getClaimsFromDb(filters?: {
+  reportId?: string;
+  lostReportId?: string;
+  claimantId?: string;
+  finderId?: string;
+}): Promise<Claim[]> {
+  initStoreFromPersistence();
+  const supabase = getSupabaseClient();
+
+  if (supabase) {
+    try {
+      let query = supabase.from("claims").select("*");
+      if (filters?.reportId) query = query.eq("report_id", filters.reportId);
+      if (filters?.lostReportId) query = query.eq("lost_report_id", filters.lostReportId);
+      if (filters?.claimantId) query = query.ilike("claimant_id", filters.claimantId);
+      if (filters?.finderId) query = query.ilike("finder_id", filters.finderId);
+
+      const { data, error } = await query;
+      if (data && !error && data.length > 0) {
+        return data.map((c: any) => ({
+          id: c.id,
+          reportId: c.report_id,
+          lostReportId: c.lost_report_id,
+          claimantId: c.claimant_id,
+          finderId: c.finder_id,
+          proofDetails: c.proof_details,
+          status: c.status,
+          createdAt: c.created_at,
+          updatedAt: c.updated_at,
+        }));
+      }
+    } catch (err) {
+      logger.warn("Supabase claims query fallback to local data store", "SupabaseDb", err);
+    }
+  }
+
+  let items = Array.from(localClaimsStore.values());
+  if (filters?.reportId) items = items.filter((c) => c.reportId === filters.reportId);
+  if (filters?.lostReportId) items = items.filter((c) => c.lostReportId === filters.lostReportId);
+  if (filters?.claimantId) {
+    const target = filters.claimantId.toLowerCase();
+    items = items.filter((c) => c.claimantId.toLowerCase() === target);
+  }
+  if (filters?.finderId) {
+    const target = filters.finderId.toLowerCase();
+    items = items.filter((c) => c.finderId?.toLowerCase() === target);
+  }
+
+  return items;
 }
 
 export async function hasExistingClaim(reportId: string, claimantId: string): Promise<boolean> {

@@ -82,7 +82,7 @@ describe("Claims Authorization and Ownership Verification", () => {
     const req = new NextRequest("http://localhost:3005/api/claims/create", {
       method: "POST",
       body: JSON.stringify({
-        reportId: "rep-seed-001",
+        reportId: "rep-test-found-earbuds",
         proofDetails: "Has engraving #492 on backside.",
       }),
     });
@@ -94,6 +94,21 @@ describe("Claims Authorization and Ownership Verification", () => {
   });
 
   it("authorizes valid claims from authenticated claimants with 201", async () => {
+    const foundReport: Report = {
+      id: `rep-found-earbuds-${Date.now()}`,
+      reportType: "FOUND",
+      userId: "security-officer-99",
+      title: "Found Wireless Earbuds",
+      description: "Found black wireless earbuds",
+      category: "electronics",
+      location: { name: "Library" },
+      reportedAt: new Date().toISOString(),
+      status: "OPEN",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await createReportInDb(foundReport);
+
     const uniqueClaimantId = `claimant-uid-${Date.now()}`;
     const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64");
     const payload = Buffer.from(
@@ -113,7 +128,7 @@ describe("Claims Authorization and Ownership Verification", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        reportId: "rep-seed-001",
+        reportId: foundReport.id,
         proofDetails: "Distinctive serial number ending in 8421 and sticker on case.",
       }),
     });
@@ -126,11 +141,25 @@ describe("Claims Authorization and Ownership Verification", () => {
   });
 
   it("prevents finders from claiming their own found items with 403", async () => {
-    // rep-seed-001 has userId 'campus-security-officer'
+    const finderReport: Report = {
+      id: `rep-found-camera-${Date.now()}`,
+      reportType: "FOUND",
+      userId: "finder-officer-77",
+      title: "Found Camera",
+      description: "Found camera",
+      category: "electronics",
+      location: { name: "Quad" },
+      reportedAt: new Date().toISOString(),
+      status: "OPEN",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await createReportInDb(finderReport);
+
     const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64");
     const payload = Buffer.from(
       JSON.stringify({
-        user_id: "campus-security-officer",
+        user_id: "finder-officer-77",
         email: "security@campus.edu",
         exp: Math.floor(Date.now() / 1000) + 3600,
       })
@@ -144,7 +173,7 @@ describe("Claims Authorization and Ownership Verification", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        reportId: "rep-seed-001",
+        reportId: finderReport.id,
         proofDetails: "Attempting to claim own item.",
       }),
     });
@@ -156,9 +185,24 @@ describe("Claims Authorization and Ownership Verification", () => {
   });
 
   it("prevents users from claiming with a lost report they do not own with 403", async () => {
+    const targetFound: Report = {
+      id: `rep-found-wallet-${Date.now()}`,
+      reportType: "FOUND",
+      userId: "finder-alex",
+      title: "Found Wallet",
+      description: "Found brown wallet",
+      category: "id_cards",
+      location: { name: "Dining" },
+      reportedAt: new Date().toISOString(),
+      status: "OPEN",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await createReportInDb(targetFound);
+
     // Create an explicit lost report owned by 'user-owner-alpha'
     const testLostReport: Report = {
-      id: "rep-test-lost-wallet-444",
+      id: `rep-test-lost-wallet-${Date.now()}`,
       reportType: "LOST",
       userId: "user-owner-alpha",
       title: "Lost Leather Wallet",
@@ -190,8 +234,8 @@ describe("Claims Authorization and Ownership Verification", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        reportId: "rep-seed-002",
-        lostReportId: "rep-test-lost-wallet-444", // Owned by user-owner-alpha
+        reportId: targetFound.id,
+        lostReportId: testLostReport.id, // Owned by user-owner-alpha
         proofDetails: "Trying to claim without owning the lost report.",
       }),
     });
