@@ -4,6 +4,8 @@ import { searchAndRankReports } from "@/lib/search/search-engine";
 import { ReportType } from "@/types";
 import { logger } from "@/lib/logger";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

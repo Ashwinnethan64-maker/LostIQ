@@ -3,6 +3,8 @@ import { getReportsFromDb } from "@/lib/supabase/repository";
 import { ReportType, ReportStatus } from "@/types";
 import { logger } from "@/lib/logger";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

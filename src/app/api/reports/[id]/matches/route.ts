@@ -3,6 +3,8 @@ import { getReportByIdFromDb, getReportsFromDb } from "@/lib/supabase/repository
 import { matchingEngine } from "@/lib/matching/engine";
 import { logger } from "@/lib/logger";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const report = await getReportByIdFromDb(params.id);

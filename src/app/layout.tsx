@@ -12,6 +12,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3005"),
   title: "LostIQ — Intelligent Lost & Found",
   description: "Lost it. Found it. Matched by AI. LostIQ is an intelligent, AI-powered campus lost & found matching platform.",
   keywords: ["LostIQ", "campus lost and found", "AI matching", "smart campus", "lost items", "found items"],
