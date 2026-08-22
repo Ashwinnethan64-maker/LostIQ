@@ -10,12 +10,29 @@ export async function GET(req: NextRequest) {
     const session = await verifyServerSession(req);
     const { searchParams } = new URL(req.url);
     const reportId = searchParams.get("reportId");
-    const userId = searchParams.get("userId") || session?.uid;
+    const requestedUserId = searchParams.get("userId") || session?.uid;
 
-    const claims = await getClaimsFromDb({
-      reportId: reportId || undefined,
-      claimantId: userId || undefined,
-    });
+    if (!requestedUserId && !reportId) {
+      return NextResponse.json({ success: true, count: 0, claims: [] });
+    }
+
+    // Query claims where the user is either the claimant (owner) or the finder
+    let claims = [];
+    if (requestedUserId) {
+      const [ownerClaims, finderClaims] = await Promise.all([
+        getClaimsFromDb({ claimantId: requestedUserId }),
+        getClaimsFromDb({ finderId: requestedUserId }),
+      ]);
+      const combinedMap = new Map();
+      for (const c of [...ownerClaims, ...finderClaims]) {
+        if (!reportId || c.reportId === reportId) {
+          combinedMap.set(c.id, c);
+        }
+      }
+      claims = Array.from(combinedMap.values());
+    } else if (reportId) {
+      claims = await getClaimsFromDb({ reportId });
+    }
 
     return NextResponse.json({ success: true, count: claims.length, claims });
   } catch (err: any) {

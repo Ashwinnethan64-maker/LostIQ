@@ -4,15 +4,15 @@
     "email": "user.a@campus.edu",
     "displayName": "User Alpha",
     "role": "user",
-    "createdAt": "2026-08-22T18:12:17.036Z",
-    "updatedAt": "2026-08-22T18:12:17.037Z"
+    "createdAt": "2026-08-22T18:15:03.933Z",
+    "updatedAt": "2026-08-22T18:15:03.934Z"
   },
   {
     "id": "firebase-uid-user-b-67890",
     "email": "user.b@campus.edu",
     "displayName": "User Beta",
     "role": "user",
-    "createdAt": "2026-08-22T18:12:17.037Z",
-    "updatedAt": "2026-08-22T18:12:17.037Z"
+    "createdAt": "2026-08-22T18:15:03.934Z",
+    "updatedAt": "2026-08-22T18:15:03.934Z"
   }
 ]
