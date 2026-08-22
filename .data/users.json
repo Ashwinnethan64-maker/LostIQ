@@ -1,18 +1,1 @@
-[
-  {
-    "id": "firebase-uid-user-a-12345",
-    "email": "user.a@campus.edu",
-    "displayName": "User Alpha",
-    "role": "user",
-    "createdAt": "2026-08-22T17:48:45.826Z",
-    "updatedAt": "2026-08-22T17:48:45.827Z"
-  },
-  {
-    "id": "firebase-uid-user-b-67890",
-    "email": "user.b@campus.edu",
-    "displayName": "User Beta",
-    "role": "user",
-    "createdAt": "2026-08-22T17:48:45.828Z",
-    "updatedAt": "2026-08-22T17:48:45.828Z"
-  }
-]
+[]

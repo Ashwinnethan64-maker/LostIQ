@@ -3,7 +3,8 @@ import path from "path";
 import { Report, UserProfile, Claim } from "@/types";
 import { logger } from "../logger";
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+const isTestEnv = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
+const DATA_DIR = path.join(process.cwd(), isTestEnv ? ".data_test" : ".data");
 const REPORTS_FILE = path.join(DATA_DIR, "reports.json");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 const CLAIMS_FILE = path.join(DATA_DIR, "claims.json");
@@ -14,7 +15,7 @@ function ensureDirectoryExists() {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
   } catch (err) {
-    logger.warn("Failed to create .data persistence directory", "FilePersistence", err);
+    logger.warn("Failed to create persistence directory", "FilePersistence", err);
   }
 }
 

@@ -1,0 +1,13 @@
+[
+  {
+    "id": "claim-1787421328726",
+    "reportId": "rep-found-earbuds-1787421328722",
+    "lostReportId": null,
+    "claimantId": "claimant-uid-1787421328723",
+    "finderId": "security-officer-99",
+    "proofDetails": "Distinctive serial number ending in 8421 and sticker on case.",
+    "status": "PENDING",
+    "createdAt": "2026-08-22T17:55:28.726Z",
+    "updatedAt": "2026-08-22T17:55:28.726Z"
+  }
+]

@@ -1,0 +1,97 @@
+[
+  {
+    "id": "rep-user-a-watch",
+    "reportType": "LOST",
+    "userId": "firebase-uid-user-a-12345",
+    "title": "Lost Casio Watch",
+    "description": "Lost black Casio watch",
+    "category": "jewelry_watches",
+    "brand": "Casio",
+    "model": "G-Shock",
+    "color": "Black",
+    "location": {
+      "name": "Quad Bench",
+      "zone": "Central Academic Quad"
+    },
+    "reportedAt": "2026-08-22T17:55:28.605Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:55:28.605Z",
+    "updatedAt": "2026-08-22T17:55:28.605Z"
+  },
+  {
+    "id": "rep-user-b-bag",
+    "reportType": "FOUND",
+    "userId": "firebase-uid-user-b-67890",
+    "title": "Found Backpack",
+    "description": "Found blue backpack",
+    "category": "bags_backpacks",
+    "location": {
+      "name": "Library 1st floor",
+      "zone": "Central Library & Study Commons"
+    },
+    "reportedAt": "2026-08-22T17:55:28.605Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:55:28.605Z",
+    "updatedAt": "2026-08-22T17:55:28.605Z"
+  },
+  {
+    "id": "rep-found-earbuds-1787421328722",
+    "reportType": "FOUND",
+    "userId": "security-officer-99",
+    "title": "Found Wireless Earbuds",
+    "description": "Found black wireless earbuds",
+    "category": "electronics",
+    "location": {
+      "name": "Library"
+    },
+    "reportedAt": "2026-08-22T17:55:28.722Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:55:28.722Z",
+    "updatedAt": "2026-08-22T17:55:28.722Z"
+  },
+  {
+    "id": "rep-found-camera-1787421328733",
+    "reportType": "FOUND",
+    "userId": "finder-officer-77",
+    "title": "Found Camera",
+    "description": "Found camera",
+    "category": "electronics",
+    "location": {
+      "name": "Quad"
+    },
+    "reportedAt": "2026-08-22T17:55:28.733Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:55:28.733Z",
+    "updatedAt": "2026-08-22T17:55:28.733Z"
+  },
+  {
+    "id": "rep-found-wallet-1787421328737",
+    "reportType": "FOUND",
+    "userId": "finder-alex",
+    "title": "Found Wallet",
+    "description": "Found brown wallet",
+    "category": "id_cards",
+    "location": {
+      "name": "Dining"
+    },
+    "reportedAt": "2026-08-22T17:55:28.737Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:55:28.737Z",
+    "updatedAt": "2026-08-22T17:55:28.737Z"
+  },
+  {
+    "id": "rep-test-lost-wallet-1787421328738",
+    "reportType": "LOST",
+    "userId": "user-owner-alpha",
+    "title": "Lost Leather Wallet",
+    "description": "Lost brown wallet",
+    "category": "id_cards",
+    "location": {
+      "name": "Quad"
+    },
+    "reportedAt": "2026-08-22T17:55:28.738Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:55:28.738Z",
+    "updatedAt": "2026-08-22T17:55:28.738Z"
+  }
+]
