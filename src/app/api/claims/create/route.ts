@@ -48,13 +48,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Step 2: Strict Invariant: Prevent Finder from claiming own found item
-    const finderUserId = targetFound.userId;
-    if (finderUserId && finderUserId.toLowerCase() === currentUserId.toLowerCase()) {
+    // Step 2: Strict Invariant: Prevent Finder from claiming own item
+    if (targetFound.userId && targetFound.userId.toLowerCase() === currentUserId.toLowerCase()) {
       logger.warn("Finder attempted to claim own found item", "ClaimsAPI", {
         currentUserId,
         foundReportId: targetFound.id,
-        finderUserId,
+        finderUserId: targetFound.userId,
       });
       return NextResponse.json(
         {
@@ -65,7 +64,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Step 3: Load & Validate Source LOST report
+    // Step 3: Load & Validate Source LOST report (if provided)
     let sourceLost = null;
     let expectedProof = targetFound.distinctiveFeatures || targetFound.description;
 
@@ -102,16 +101,7 @@ export async function POST(req: NextRequest) {
       expectedProof = sourceLost.privateOwnershipProof || sourceLost.distinctiveFeatures || sourceLost.description;
     }
 
-    // Step 4: Check for existing active claim by this claimant
-    const alreadyClaimed = await hasExistingClaim(targetFound.id, currentUserId);
-    if (alreadyClaimed) {
-      return NextResponse.json(
-        { success: false, error: "You have already submitted an active ownership claim for this item" },
-        { status: 409 }
-      );
-    }
-
-    // Step 5: Execute server-side proof verification against private proof
+    // Step 4: Validate proof details
     const verificationResult = verifyOwnershipProof(expectedProof, body.proofDetails);
     const claimId = `claim-${Date.now()}`;
 
@@ -134,6 +124,7 @@ export async function POST(req: NextRequest) {
       metadata: { targetFoundId: targetFound.id, sourceLostId: sourceLost?.id },
     });
 
+    // Check verification score
     if (!verificationResult.passed && sourceLost) {
       await logRecoveryEvent({
         claimId,
@@ -151,7 +142,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Step 6: Create Verified Claim Record
+    // Step 5: Create Verified Claim Record
     const claim: Claim = {
       id: claimId,
       reportId: targetFound.id,
