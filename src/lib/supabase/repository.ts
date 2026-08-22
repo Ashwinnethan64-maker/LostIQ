@@ -1,4 +1,4 @@
-import { Report, ReportType, ReportStatus, UserProfile } from "@/types";
+import { Report, ReportType, ReportStatus, UserProfile, Claim } from "@/types";
 import { getSupabaseClient } from "./client";
 import { logger } from "../logger";
 
@@ -7,13 +7,16 @@ import { logger } from "../logger";
 const globalForReports = globalThis as unknown as {
   localReportsStore?: Map<string, Report>;
   localUsersStore?: Map<string, UserProfile>;
+  localClaimsStore?: Map<string, Claim>;
 };
 
 const localReportsStore = globalForReports.localReportsStore || new Map<string, Report>();
 const localUsersStore = globalForReports.localUsersStore || new Map<string, UserProfile>();
+const localClaimsStore = globalForReports.localClaimsStore || new Map<string, Claim>();
 
 if (!globalForReports.localReportsStore) globalForReports.localReportsStore = localReportsStore;
 if (!globalForReports.localUsersStore) globalForReports.localUsersStore = localUsersStore;
+if (!globalForReports.localClaimsStore) globalForReports.localClaimsStore = localClaimsStore;
 
 function ensureSeedData() {
   if (localReportsStore.size > 0) return;
@@ -246,4 +249,61 @@ export async function getReportsFromDb(filters?: {
   }
 
   return items.slice(0, maxLimit);
+}
+
+// 5. Create & Check Claims
+export async function createClaimInDb(claim: Claim): Promise<Claim> {
+  const supabase = getSupabaseClient();
+  localClaimsStore.set(claim.id, claim);
+
+  if (supabase) {
+    try {
+      const { error } = await supabase.from("claims").insert({
+        id: claim.id,
+        report_id: claim.reportId,
+        claimant_id: claim.claimantId,
+        proof_details: claim.proofDetails,
+        status: claim.status,
+        created_at: claim.createdAt,
+        updated_at: claim.updatedAt,
+      });
+
+      if (error) {
+        logger.error("Error creating claim in Supabase. Stored locally in persistent map.", "SupabaseDb", error);
+      } else {
+        logger.info("Claim successfully stored in Supabase PostgreSQL", "SupabaseDb", { id: claim.id });
+      }
+    } catch (err) {
+      logger.error("Supabase claim insert exception", "SupabaseDb", err);
+    }
+  }
+
+  return claim;
+}
+
+export async function hasExistingClaim(reportId: string, claimantId: string): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("claims")
+        .select("id")
+        .eq("report_id", reportId)
+        .ilike("claimant_id", claimantId)
+        .limit(1);
+
+      if (data && data.length > 0) return true;
+    } catch (err) {
+      logger.warn("Error checking existing claim in Supabase", "SupabaseDb", err);
+    }
+  }
+
+  const targetClaimant = claimantId.toLowerCase();
+  for (const c of Array.from(localClaimsStore.values())) {
+    if (c.reportId === reportId && c.claimantId.toLowerCase() === targetClaimant) {
+      return true;
+    }
+  }
+
+  return false;
 }

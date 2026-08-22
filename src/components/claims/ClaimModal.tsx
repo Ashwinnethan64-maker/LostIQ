@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, ShieldCheck, AlertCircle, Loader2, ArrowRight } from "lucide-react";
+import { X, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 interface ClaimModalProps {
@@ -12,7 +12,7 @@ interface ClaimModalProps {
 }
 
 export function ClaimModal({ reportId, reportTitle, isOpen, onClose }: ClaimModalProps) {
-  const { user } = useAuth();
+  const { user, getFreshToken } = useAuth();
   const [proofDetails, setProofDetails] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -31,19 +31,35 @@ export function ClaimModal({ reportId, reportTitle, isOpen, onClose }: ClaimModa
     setError(null);
 
     try {
+      // Obtain fresh Firebase ID token
+      const token = await getFreshToken();
+      if (!token) {
+        throw new Error("You must be logged in with Google to file an ownership claim.");
+      }
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
       const res = await fetch("/api/claims/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           reportId,
-          claimantId: user?.id || "demo-claimant-101",
           proofDetails: proofDetails.trim(),
         }),
       });
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to submit claim request");
+        if (res.status === 401) {
+          throw new Error("Authentication failure: Your session has expired. Please log in again.");
+        }
+        if (res.status === 403) {
+          throw new Error(data.error || "Authorization error: You cannot claim this item.");
+        }
+        throw new Error(data.error || "Failed to submit claim request.");
       }
 
       setSuccess(true);
