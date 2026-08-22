@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { RouteGuard } from "@/lib/auth/RouteGuard";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { PlusCircle, Search, LayoutDashboard, ArrowRight, Shield } from "lucide-react";
+import { PlusCircle, Search, LayoutDashboard, ArrowRight, ShieldCheck } from "lucide-react";
 import { Report } from "@/types";
+import { getFirstName } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -16,7 +17,9 @@ export default function DashboardPage() {
     async function fetchUserReports() {
       if (!user) return;
       try {
-        const res = await fetch(`/api/reports?userId=${user.id}`);
+        const res = await fetch(`/api/reports?userId=${encodeURIComponent(user.id)}`, {
+          cache: "no-store",
+        });
         const data = await res.json();
         if (data.success) {
           setReports(data.reports || []);
@@ -32,28 +35,30 @@ export default function DashboardPage() {
 
   const lostCount = reports.filter((r) => r.reportType === "LOST").length;
   const foundCount = reports.filter((r) => r.reportType === "FOUND").length;
+  const firstName = getFirstName(user);
 
   return (
     <RouteGuard>
       <div className="space-y-10 py-4">
         
-        {/* Editorial Header */}
+        {/* Editorial Header (Issue 9, 10, 19 Fix: Show First Name, remove raw technical UID) */}
         <div className="border-8 border-black bg-white p-6 sm:p-10 shadow-neo-xl space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex items-center gap-2 border-3 border-black bg-[#C4B5FD] text-black px-3.5 py-1 text-xs font-black uppercase shadow-neo-sm">
               <LayoutDashboard className="h-4 w-4" />
               <span>CONTROL DESK • {user?.role === "admin" ? "ADMIN ACCESS" : "STUDENT PORTAL"}</span>
             </div>
-            <span className="neo-sticker bg-[#FFD93D] text-black">
-              USER ID: {user?.id}
-            </span>
+            <div className="inline-flex items-center gap-1.5 border-3 border-black bg-[#FFD93D] px-3 py-1 text-xs font-black uppercase shadow-neo-sm">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>AUTHENTICATED AS {firstName.toUpperCase()}</span>
+            </div>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase text-black leading-none">
             LOSTIQ <span className="bg-black text-white px-2 py-0.5 inline-block -rotate-1">CONTROL</span> DESK.
           </h1>
           <p className="font-bold text-sm sm:text-base text-black/80 max-w-xl">
-            Welcome back, {user?.displayName || "Campus User"}. Manage your submissions, monitor active AI matches, and process recovery claims.
+            Welcome back, {firstName}. Manage your submissions, monitor active AI matches, and process recovery claims.
           </p>
 
           {/* Quick Action Buttons */}
@@ -82,31 +87,31 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 4 Bold Metric Blocks */}
+        {/* 4 Bold Metric Blocks (Issues 16, 17, 18 Fix: Explicit label, numeric value, context) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           
           <div className="neo-card p-5 border-4 border-black bg-[#FF6B6B] text-white">
-            <div className="text-xs font-black uppercase tracking-widest text-white/80">LOST REPORTS</div>
+            <div className="text-xs font-black uppercase tracking-widest text-white/90">MY LOST REPORTS</div>
             <div className="text-4xl sm:text-5xl font-black mt-2">{lostCount}</div>
-            <div className="text-[10px] font-bold uppercase mt-1 text-white/80">ACTIVE VALUABLES</div>
+            <div className="text-[10px] font-bold uppercase mt-1 text-white/90">ACTIVE MISSING TICKETS</div>
           </div>
 
           <div className="neo-card p-5 border-4 border-black bg-[#FFD93D] text-black">
-            <div className="text-xs font-black uppercase tracking-widest text-black/70">FOUND REPORTS</div>
+            <div className="text-xs font-black uppercase tracking-widest text-black/80">MY FOUND REPORTS</div>
             <div className="text-4xl sm:text-5xl font-black mt-2">{foundCount}</div>
-            <div className="text-[10px] font-bold uppercase mt-1 text-black/70">COMMUNITY TURN-INS</div>
+            <div className="text-[10px] font-bold uppercase mt-1 text-black/80">COMMUNITY TURN-INS</div>
           </div>
 
           <div className="neo-card p-5 border-4 border-black bg-[#C4B5FD] text-black">
-            <div className="text-xs font-black uppercase tracking-widest text-black/70">TOTAL SUBMISSIONS</div>
+            <div className="text-xs font-black uppercase tracking-widest text-black/80">TOTAL SUBMISSIONS</div>
             <div className="text-4xl sm:text-5xl font-black mt-2">{reports.length}</div>
-            <div className="text-[10px] font-bold uppercase mt-1 text-black/70">PERSISTED IN SUPABASE</div>
+            <div className="text-[10px] font-bold uppercase mt-1 text-black/80">FILED UNDER YOUR ACCOUNT</div>
           </div>
 
           <div className="neo-card p-5 border-4 border-black bg-white text-black">
-            <div className="text-xs font-black uppercase tracking-widest text-black/60">AI MATCH STATUS</div>
-            <div className="text-4xl sm:text-5xl font-black mt-2 text-[#FF6B6B]">LIVE</div>
-            <div className="text-[10px] font-bold uppercase mt-1 text-black/60">5-SIGNAL ACTIVE SCORING</div>
+            <div className="text-xs font-black uppercase tracking-widest text-black/70">AI MATCH MONITOR</div>
+            <div className="text-4xl sm:text-5xl font-black mt-2 text-[#FF6B6B]">ACTIVE</div>
+            <div className="text-[10px] font-bold uppercase mt-1 text-black/70">5-SIGNAL MULTIMODAL RADAR</div>
           </div>
 
         </div>

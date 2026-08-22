@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Shield, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { getFirstName } from "@/lib/utils";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -18,6 +19,8 @@ export function Navbar() {
     { href: "/report/found", label: "REPORT FOUND", icon: PlusCircle, highlight: "found" },
     ...(user ? [{ href: "/dashboard", label: "CONTROL DESK", icon: LayoutDashboard }] : []),
   ];
+
+  const firstName = getFirstName(user);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b-4 border-black bg-white shadow-neo-sm">
@@ -40,7 +43,7 @@ export function Navbar() {
               Lost<span className="bg-[#FF6B6B] text-white px-1.5 py-0.5 border-2 border-black rotate-1 inline-block">IQ</span>
             </span>
             <span className="text-[10px] font-black uppercase tracking-widest text-black/80 -mt-1 hidden sm:inline">
-              INTELLIGENT LOST & FOUND
+              INTELLIGENT LOST &amp; FOUND
             </span>
           </div>
         </Link>
@@ -71,26 +74,37 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Auth Section */}
+        {/* Auth Section (Issues 9, 10, 11, 21 Fix: Render First Name & Avatar, no raw UID/email) */}
         <div className="hidden lg:flex items-center gap-3">
           {loading ? (
             <div className="h-10 w-24 border-3 border-black bg-muted animate-pulse" />
           ) : user ? (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 border-3 border-black bg-[#FFFDF5] px-3 py-1.5 shadow-[3px_3px_0px_#000000]">
-                {user.role === "admin" ? (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 border-3 border-black bg-[#FFFDF5] px-3 py-1.5 shadow-[3px_3px_0px_#000000] hover:bg-[#FFD93D] transition-colors"
+              >
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={firstName}
+                    className="h-6 w-6 border-2 border-black object-cover"
+                  />
+                ) : user.role === "admin" ? (
                   <Shield className="h-4 w-4 text-[#FF6B6B]" />
                 ) : (
-                  <div className="h-3 w-3 bg-[#FFD93D] border-2 border-black" />
+                  <div className="h-6 w-6 bg-[#FFD93D] border-2 border-black flex items-center justify-center font-black text-xs text-black">
+                    {firstName.charAt(0)}
+                  </div>
                 )}
                 <span className="text-xs font-black uppercase max-w-[130px] truncate text-black">
-                  {user.displayName || user.email.split("@")[0]}
+                  {firstName}
                 </span>
-              </div>
+              </Link>
               <button
                 onClick={() => logout()}
                 className="neo-button px-3 py-1.5 text-xs bg-[#E2E8F0] text-black hover:bg-[#FF6B6B] hover:text-white border-3 border-black"
-                title="Sign Out"
+                title="Sign Out and Return to Home"
               >
                 <LogOut className="h-4 w-4 mr-1" />
                 EXIT
@@ -142,7 +156,7 @@ export function Navbar() {
                 }}
                 className="neo-button w-full py-3 text-sm bg-[#FF6B6B] text-white border-4 border-black mt-2"
               >
-                LOGOUT ({user.displayName || user.email})
+                LOGOUT ({firstName})
               </button>
             ) : (
               <Link

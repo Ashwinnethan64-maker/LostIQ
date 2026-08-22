@@ -43,12 +43,26 @@ export default function RootLayout({
     <html lang="en" className={spaceGrotesk.variable}>
       <body className="min-h-screen flex flex-col bg-[#FFFDF5] text-black font-sans antialiased selection:bg-[#FFD93D] selection:text-black">
         <AuthProvider>
-          <div className="bg-[#FFD93D] text-black font-black text-xs py-1.5 px-4 border-b-4 border-black uppercase tracking-widest text-center flex items-center justify-center gap-3 overflow-hidden select-none">
-            <span>⚡ AI-POWERED CAMPUS LOST & FOUND INTELLIGENCE</span>
-            <span className="hidden sm:inline">★</span>
-            <span className="hidden sm:inline">MULTIMODAL VISION RECOGNITION</span>
-            <span className="hidden md:inline">★</span>
-            <span className="hidden md:inline">REAL-TIME MULTI-SIGNAL MATCHING</span>
+          {/* Issue 2 Fix: Smooth, continuous, zero-jump editorial ticker without layout overflow */}
+          <div className="bg-[#FFD93D] text-black font-black text-xs py-2 px-0 border-b-4 border-black uppercase tracking-widest overflow-hidden select-none whitespace-nowrap relative">
+            <div className="flex w-max animate-ticker">
+              <div className="flex items-center gap-6 px-4">
+                <span>⚡ AI-POWERED CAMPUS LOST &amp; FOUND INTELLIGENCE</span>
+                <span>★</span>
+                <span>MULTIMODAL VISION RECOGNITION</span>
+                <span>★</span>
+                <span>REAL-TIME MULTI-SIGNAL MATCHING</span>
+                <span>★</span>
+              </div>
+              <div className="flex items-center gap-6 px-4" aria-hidden="true">
+                <span>⚡ AI-POWERED CAMPUS LOST &amp; FOUND INTELLIGENCE</span>
+                <span>★</span>
+                <span>MULTIMODAL VISION RECOGNITION</span>
+                <span>★</span>
+                <span>REAL-TIME MULTI-SIGNAL MATCHING</span>
+                <span>★</span>
+              </div>
+            </div>
           </div>
           <Navbar />
           <main className="flex-1 container mx-auto px-4 sm:px-6 py-8 max-w-7xl">

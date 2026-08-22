@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { AIAttributesSchema } from "@/lib/validations/ai.schema";
 import { ReportSubmissionSchema } from "@/lib/validations/report.schema";
+import { getFirstName } from "@/lib/utils";
+import { UserProfile } from "@/types";
 
 describe("Validation Schemas", () => {
   it("validates well-formed AI attributes output", () => {
@@ -47,5 +49,48 @@ describe("Validation Schemas", () => {
 
     const res = ReportSubmissionSchema.safeParse(invalidReport);
     expect(res.success).toBe(false);
+  });
+});
+
+describe("User Display Name Formatter (Issue 9 & 10)", () => {
+  it("extracts clean first name from full displayName", () => {
+    const user: UserProfile = {
+      id: "uid-1",
+      email: "ash970053@gmail.com",
+      displayName: "Ashwin Nethan",
+      role: "user",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    expect(getFirstName(user)).toBe("Ashwin");
+  });
+
+  it("extracts first name from underscore-delimited username", () => {
+    const user: UserProfile = {
+      id: "uid-2",
+      email: "ashwin_nethan56@example.com",
+      displayName: "Ashwin_Nethan56",
+      role: "user",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    expect(getFirstName(user)).toBe("Ashwin");
+  });
+
+  it("falls back to email prefix cleanly when displayName is missing", () => {
+    const user: UserProfile = {
+      id: "uid-3",
+      email: "sarah.connor@campus.edu",
+      displayName: "",
+      role: "user",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    expect(getFirstName(user)).toBe("Sarah");
+  });
+
+  it("handles null and undefined gracefully", () => {
+    expect(getFirstName(null)).toBe("Campus User");
+    expect(getFirstName(undefined)).toBe("Campus User");
   });
 });

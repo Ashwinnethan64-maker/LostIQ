@@ -127,13 +127,11 @@ export default function ReportsDirectoryPage() {
 
       {/* Reports Grid */}
       <div className="space-y-6">
+        {/* Issue 3 Fix: Removed 'AUTO-SYNCED TO SUPABASE' infrastructure text from header */}
         <div className="flex items-center justify-between border-b-4 border-black pb-2">
           <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black">
             ACTIVE REPORTS ({reports.length})
           </h2>
-          <span className="text-xs font-bold uppercase tracking-widest text-black/70">
-            AUTO-SYNCED TO SUPABASE
-          </span>
         </div>
 
         {loading ? (

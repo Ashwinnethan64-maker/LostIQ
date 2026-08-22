@@ -120,9 +120,9 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Step 2 */}
+          {/* Step 2 (Issue 1 Fix: 02 badge changed to yellow #FFD93D with black text and border) */}
           <div className="neo-card p-6 border-4 border-black bg-[#FFD93D] text-black space-y-3">
-            <div className="h-12 w-12 border-3 border-black bg-black text-white flex items-center justify-center font-black text-2xl shadow-neo-sm">
+            <div className="h-12 w-12 border-3 border-black bg-[#FFD93D] text-black flex items-center justify-center font-black text-2xl shadow-neo-sm">
               02
             </div>
             <h3 className="font-black text-xl tracking-tight text-black">MULTIMODAL AI PARSING</h3>

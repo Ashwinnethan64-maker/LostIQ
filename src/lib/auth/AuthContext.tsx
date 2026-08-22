@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { UserProfile, subscribeToAuthState, bootstrapServerSession, signOutUser, signInWithGoogle } from "@/lib/firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import { logger } from "@/lib/logger";
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [status, setStatus] = useState<AuthStateStatus>("INITIALIZING");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -102,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Issues 12, 13, 14, 15 Fix: Universal logout sequence with complete state wipe and "/" landing redirect
   const logout = async () => {
     setStatus("INITIALIZING");
     try {
@@ -109,8 +112,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setStatus("UNAUTHENTICATED");
       setErrorMessage(null);
+      
+      // Cleanly redirect to landing page root "/"
+      router.push("/");
+      router.refresh();
     } catch (err) {
       logger.error("Logout error", "AuthContext", err);
+      setUser(null);
+      setStatus("UNAUTHENTICATED");
+      router.push("/");
     }
   };
 

@@ -39,7 +39,10 @@ export function ReportForm({ initialType }: ReportFormProps) {
   const { user, getFreshToken } = useAuth();
   const router = useRouter();
 
-  const [reportType, setReportType] = useState<ReportType>(initialType);
+  // Mode is locked to dedicated route's type (LOST on /report/lost, FOUND on /report/found)
+  const reportType: ReportType = initialType;
+  const isLost = reportType === "LOST";
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<ItemCategory>("electronics");
@@ -55,8 +58,6 @@ export function ReportForm({ initialType }: ReportFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [submissionStage, setSubmissionStage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const isLost = reportType === "LOST";
 
   // Instant Client-Side Image Selection & Validation
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,29 +174,21 @@ export function ReportForm({ initialType }: ReportFormProps) {
       isLost ? "border-t-[#FF6B6B]" : "border-t-[#FFD93D]"
     }`}>
       
-      {/* 01: Physical Tabs Selector */}
-      <div className="grid grid-cols-2 border-b-6 border-black bg-[#E2E8F0]">
-        <button
-          type="button"
-          onClick={() => setReportType("LOST")}
-          className={`py-4 sm:py-5 text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 border-r-4 border-black transition-all ${
-            isLost ? "bg-[#FF6B6B] text-white shadow-inner" : "bg-white text-black hover:bg-[#FFFDF5]"
-          }`}
-        >
-          <span className="h-3 w-3 bg-white border-2 border-black inline-block" />
-          I LOST SOMETHING
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setReportType("FOUND")}
-          className={`py-4 sm:py-5 text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
-            !isLost ? "bg-[#FFD93D] text-black shadow-inner" : "bg-white text-black hover:bg-[#FFFDF5]"
-          }`}
-        >
-          <span className="h-3 w-3 bg-black border-2 border-black inline-block" />
-          I FOUND SOMETHING
-        </button>
+      {/* Issues 4, 5, 6, 7, 8 Fix: Render only the dedicated mode banner matching route identity */}
+      <div className={`p-4 sm:p-5 border-b-6 border-black font-black text-xs sm:text-sm uppercase flex items-center justify-between gap-3 ${
+        isLost ? "bg-[#FF6B6B] text-white" : "bg-[#FFD93D] text-black"
+      }`}>
+        <div className="flex items-center gap-2">
+          <Sparkles className={`h-5 w-5 ${isLost ? "text-white" : "text-black"}`} />
+          <span className="tracking-wider">
+            {isLost ? "I LOST SOMETHING" : "I FOUND SOMETHING"}
+          </span>
+        </div>
+        <span className={`border-2 border-black px-2.5 py-0.5 text-[11px] font-black uppercase ${
+          isLost ? "bg-white text-black" : "bg-black text-white"
+        }`}>
+          {isLost ? "URGENT RECOVERY MODE" : "COMMUNITY RETURN MODE"}
+        </span>
       </div>
 
       {/* Purpose Banner */}
@@ -203,16 +196,13 @@ export function ReportForm({ initialType }: ReportFormProps) {
         isLost ? "bg-[#FF6B6B]/15 text-black" : "bg-[#FFD93D]/30 text-black"
       }`}>
         <div className="flex items-center gap-2">
-          <Sparkles className={`h-4 w-4 ${isLost ? "text-[#FF6B6B]" : "text-black"}`} />
+          <span className="h-2.5 w-2.5 bg-black inline-block" />
           <span>
             {isLost
-              ? "LOST REPORT PIPELINE • LostIQ will search active found turn-ins for potential matches."
-              : "FOUND REPORT PIPELINE • LostIQ will look for active lost reports that may belong to this item."}
+              ? "Tell LostIQ what went missing. We will automatically match opposite turn-in reports 24/7."
+              : "Help reconnect this item with its owner. We will automatically find matching lost tickets."}
           </span>
         </div>
-        <span className="hidden sm:inline-block border-2 border-black bg-white px-2 py-0.5 text-[10px]">
-          {isLost ? "URGENT RECOVERY" : "COMMUNITY RETURN"}
-        </span>
       </div>
 
       {/* Main Single Form Container */}
@@ -226,11 +216,11 @@ export function ReportForm({ initialType }: ReportFormProps) {
           </div>
         )}
 
-        {/* SECTION 02: ITEM PHOTO UPLOADER */}
+        {/* SECTION 01: ITEM PHOTO UPLOADER */}
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b-2 border-black pb-1">
             <label className="text-xs font-black uppercase tracking-widest text-black flex items-center gap-2">
-              <span className="bg-black text-white px-1.5 py-0.5 text-[10px]">02</span>
+              <span className="bg-black text-white px-1.5 py-0.5 text-[10px]">01</span>
               <span>ITEM PHOTO (INSTANT PREVIEW &amp; AI MULTIMODAL PARSING)</span>
             </label>
             <span className="text-[10px] font-black uppercase bg-[#FFD93D] px-2 py-0.5 border-2 border-black">
@@ -279,10 +269,10 @@ export function ReportForm({ initialType }: ReportFormProps) {
           </div>
         </div>
 
-        {/* SECTION 03: ITEM DETAILS */}
+        {/* SECTION 02: ITEM DETAILS */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 border-b-2 border-black pb-1">
-            <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-black">03</span>
+            <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-black">02</span>
             <span className="text-xs font-black uppercase tracking-widest text-black">ITEM DETAILS</span>
           </div>
 
@@ -322,10 +312,10 @@ export function ReportForm({ initialType }: ReportFormProps) {
           </div>
         </div>
 
-        {/* SECTION 04: LOCATION & TIME */}
+        {/* SECTION 03: LOCATION & TIME */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 border-b-2 border-black pb-1">
-            <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-black">04</span>
+            <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-black">03</span>
             <span className="text-xs font-black uppercase tracking-widest text-black">CAMPUS LOCATION &amp; TIME</span>
           </div>
 
@@ -393,10 +383,10 @@ export function ReportForm({ initialType }: ReportFormProps) {
           </div>
         </div>
 
-        {/* SECTION 05: DESCRIPTION */}
+        {/* SECTION 04: DESCRIPTION */}
         <div className="space-y-2">
           <div className="flex items-center gap-2 border-b-2 border-black pb-1">
-            <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-black">05</span>
+            <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-black">04</span>
             <label className="text-xs font-black uppercase tracking-widest text-black">
               DISTINGUISHING FEATURES &amp; NOTES *
             </label>
@@ -416,7 +406,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
           />
         </div>
 
-        {/* SECTION 06 & 07: SUBMISSION & PIPELINE */}
+        {/* SECTION 05: SUBMISSION */}
         <div className="space-y-4 pt-4 border-t-4 border-black">
           {submitting && (
             <div className="border-4 border-black bg-[#FFD93D] text-black p-4 space-y-2 shadow-neo-sm">
