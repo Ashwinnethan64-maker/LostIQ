@@ -94,10 +94,11 @@ describe("Claims Authorization and Ownership Verification", () => {
   });
 
   it("authorizes valid claims from authenticated claimants with 201", async () => {
+    const uniqueClaimantId = `claimant-uid-${Date.now()}`;
     const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64");
     const payload = Buffer.from(
       JSON.stringify({
-        user_id: "claimant-uid-sam-999",
+        user_id: uniqueClaimantId,
         email: "sam@campus.edu",
         name: "Sam Lee",
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -121,7 +122,7 @@ describe("Claims Authorization and Ownership Verification", () => {
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.success).toBe(true);
-    expect(body.claim.claimantId).toBe("claimant-uid-sam-999");
+    expect(body.claim.claimantId).toBe(uniqueClaimantId);
   });
 
   it("prevents finders from claiming their own found items with 403", async () => {

@@ -1,0 +1,129 @@
+[
+  {
+    "id": "rep-seed-001",
+    "reportType": "FOUND",
+    "userId": "campus-security-officer",
+    "title": "Black Sony Wireless Earbuds & Case",
+    "description": "Found black Sony WF-1000XM4 wireless earbuds with charging case near the 2nd floor library study carrels. Case has a minor surface scratch on the top lid.",
+    "category": "electronics",
+    "imageUrl": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80",
+    "location": {
+      "name": "Central Library 2nd Floor Study Commons",
+      "zone": "Central Library & Study Commons"
+    },
+    "reportedAt": "2026-08-22T17:37:59.255Z",
+    "status": "OPEN",
+    "ai": {
+      "summary": "Black Sony wireless earbuds in matte charging case with minor scratch.",
+      "category": "electronics",
+      "objectType": "wireless earbuds",
+      "brand": "Sony",
+      "color": "black",
+      "attributes": [
+        "charging case",
+        "matte black finish",
+        "scratch on lid"
+      ],
+      "keywords": [
+        "sony",
+        "earbuds",
+        "wireless",
+        "audio",
+        "case",
+        "black"
+      ],
+      "extractedAt": "2026-08-22T17:37:59.255Z"
+    },
+    "createdAt": "2026-08-22T17:37:59.255Z",
+    "updatedAt": "2026-08-22T17:37:59.255Z"
+  },
+  {
+    "id": "rep-seed-002",
+    "reportType": "FOUND",
+    "userId": "student-alex",
+    "title": "Brown Leather Fossil Bi-fold Wallet",
+    "description": "Found brown leather wallet under a table at Student Center dining hall. Contains student transit pass.",
+    "category": "id_cards",
+    "imageUrl": "https://images.unsplash.com/photo-1627123424574-724758594e93?w=800&auto=format&fit=crop&q=80",
+    "location": {
+      "name": "Student Dining Center Lower Level",
+      "zone": "Student Center & Dining Hall"
+    },
+    "reportedAt": "2026-08-21T17:37:59.257Z",
+    "status": "OPEN",
+    "ai": {
+      "summary": "Distressed brown leather bifold wallet with visible card slots.",
+      "category": "id_cards",
+      "objectType": "wallet",
+      "brand": "Fossil",
+      "color": "brown",
+      "attributes": [
+        "leather",
+        "bifold",
+        "card slots",
+        "distressed finish"
+      ],
+      "keywords": [
+        "wallet",
+        "leather",
+        "brown",
+        "fossil",
+        "cards",
+        "cash"
+      ],
+      "extractedAt": "2026-08-21T17:37:59.257Z"
+    },
+    "createdAt": "2026-08-21T17:37:59.257Z",
+    "updatedAt": "2026-08-21T17:37:59.257Z"
+  },
+  {
+    "id": "rep-user-a-watch",
+    "reportType": "LOST",
+    "userId": "firebase-uid-user-a-12345",
+    "title": "Lost Casio Watch",
+    "description": "Lost black Casio watch",
+    "category": "jewelry_watches",
+    "brand": "Casio",
+    "model": "G-Shock",
+    "color": "Black",
+    "location": {
+      "name": "Quad Bench",
+      "zone": "Central Academic Quad"
+    },
+    "reportedAt": "2026-08-22T17:38:29.811Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:38:29.811Z",
+    "updatedAt": "2026-08-22T17:38:29.811Z"
+  },
+  {
+    "id": "rep-user-b-bag",
+    "reportType": "FOUND",
+    "userId": "firebase-uid-user-b-67890",
+    "title": "Found Backpack",
+    "description": "Found blue backpack",
+    "category": "bags_backpacks",
+    "location": {
+      "name": "Library 1st floor",
+      "zone": "Central Library & Study Commons"
+    },
+    "reportedAt": "2026-08-22T17:38:29.811Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:38:29.811Z",
+    "updatedAt": "2026-08-22T17:38:29.811Z"
+  },
+  {
+    "id": "rep-test-lost-wallet-444",
+    "reportType": "LOST",
+    "userId": "user-owner-alpha",
+    "title": "Lost Leather Wallet",
+    "description": "Lost brown wallet",
+    "category": "id_cards",
+    "location": {
+      "name": "Quad"
+    },
+    "reportedAt": "2026-08-22T17:38:29.914Z",
+    "status": "OPEN",
+    "createdAt": "2026-08-22T17:38:29.914Z",
+    "updatedAt": "2026-08-22T17:38:29.914Z"
+  }
+]
