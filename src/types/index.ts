@@ -27,8 +27,15 @@ export interface AIRawAttributes {
   keywords: string[];
   color: string;
   brand: string;
+  model?: string;
+  material?: string;
   objectType: string;
   extractedAt: string;
+  // Transparent origin tracking
+  brandSource?: "USER" | "AI";
+  colorSource?: "USER" | "AI";
+  modelSource?: "USER" | "AI";
+  materialSource?: "USER" | "AI";
 }
 
 export interface Report {
@@ -38,6 +45,11 @@ export interface Report {
   title: string;
   description: string;
   category: ItemCategory;
+  brand?: string | null;
+  model?: string | null;
+  color?: string | null;
+  material?: string | null;
+  distinctiveFeatures?: string | null;
   imageUrl?: string | null;
   location: LocationData;
   reportedAt: string;
@@ -81,11 +93,13 @@ export interface MatchCandidate {
 
 export interface Claim {
   id: string;
-  reportId: string;
-  claimantId: string;
-  proofDetails: string;
+  reportId: string;           // Target report ID (typically the FOUND item being claimed)
+  lostReportId?: string | null; // The claimant's originating LOST report ID
+  claimantId: string;         // The authenticated user who created the LOST report
+  finderId?: string | null;   // The user who created the FOUND report
+  proofDetails: string;       // Private ownership verification details
   proofImageUrl?: string | null;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+  status: "PENDING" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "COMPLETED" | "CANCELLED";
   reviewerId?: string | null;
   reviewNote?: string | null;
   createdAt: string;

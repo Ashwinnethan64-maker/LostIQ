@@ -11,14 +11,13 @@ describe("Security and Server-Side Token Verification", () => {
   });
 
   it("verifies and extracts claims from a well-formed Firebase ID token", async () => {
-    // Generate valid unexpired token payload
     const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64");
     const payload = Buffer.from(
       JSON.stringify({
         user_id: "firebase-uid-alex-456",
         email: "alex@campus.edu",
         name: "Alex Rivera",
-        exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour future
+        exp: Math.floor(Date.now() / 1000) + 3600,
       })
     ).toString("base64");
     const dummySignature = "dummySig123";
@@ -43,7 +42,7 @@ describe("Security and Server-Side Token Verification", () => {
       JSON.stringify({
         user_id: "firebase-uid-expired",
         email: "expired@campus.edu",
-        exp: Math.floor(Date.now() / 1000) - 300, // 5 min in past
+        exp: Math.floor(Date.now() / 1000) - 300,
       })
     ).toString("base64");
     const token = `${header}.${payload}.sig`;
@@ -150,6 +149,6 @@ describe("Claims Authorization and Ownership Verification", () => {
     const res = await createClaimHandler(req);
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toContain("You cannot file an ownership claim on an item you reported found");
+    expect(body.error).toContain("finder for this item");
   });
 });

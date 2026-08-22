@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       finderUid: targetReport.userId,
     });
 
-    // 4. Authorization Rule: Only FOUND reports can be claimed
+    // 4. Authorization Rule: Only FOUND reports can receive ownership claims
     if (targetReport.reportType !== "FOUND") {
       logger.warn("Claim rejected: report is not a FOUND item", "ClaimsAPI", {
         reportId: body.reportId,
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Authorization Rule: The finder cannot claim their own found report
+    // 5. Authorization Rule: Finder cannot claim their own found report
     if (targetReport.userId && targetReport.userId.toLowerCase() === claimantUid.toLowerCase()) {
       logger.warn("Claim rejected: finder attempting to claim their own found report", "ClaimsAPI", {
         reportId: body.reportId,
@@ -81,7 +81,10 @@ export async function POST(req: NextRequest) {
         authorizationResult: "denied",
       });
       return NextResponse.json(
-        { success: false, error: "Authorization error: You cannot file an ownership claim on an item you reported found" },
+        {
+          success: false,
+          error: "You're listed as the finder for this item. Ownership claims can only be submitted by the person who reported the item as lost.",
+        },
         { status: 403 }
       );
     }
@@ -103,7 +106,9 @@ export async function POST(req: NextRequest) {
     const claim: Claim = {
       id: `claim-${Date.now()}`,
       reportId: body.reportId,
+      lostReportId: body.lostReportId || null,
       claimantId: claimantUid, // Guaranteed derived from verified token
+      finderId: targetReport.userId || null,
       proofDetails: body.proofDetails.trim(),
       status: "PENDING",
       createdAt: new Date().toISOString(),
@@ -115,6 +120,7 @@ export async function POST(req: NextRequest) {
       id: savedClaim.id,
       reportId: savedClaim.reportId,
       claimantId: savedClaim.claimantId,
+      finderId: savedClaim.finderId,
       authorizationResult: "allowed",
     });
 

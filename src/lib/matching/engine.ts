@@ -102,8 +102,8 @@ export class MatchingEngine {
   }
 
   private calculateSemanticScore(source: Report, target: Report): number {
-    const textA = `${source.title} ${source.description} ${source.ai?.summary || ""}`.toLowerCase();
-    const textB = `${target.title} ${target.description} ${target.ai?.summary || ""}`.toLowerCase();
+    const textA = `${source.title} ${source.description} ${source.ai?.summary || ""} ${source.brand || ""} ${source.model || ""}`.toLowerCase();
+    const textB = `${target.title} ${target.description} ${target.ai?.summary || ""} ${target.brand || ""} ${target.model || ""}`.toLowerCase();
 
     const wordsA = new Set(textA.split(/[^a-zA-Z0-9]+/).filter((w) => w.length > 3));
     const wordsB = new Set(textB.split(/[^a-zA-Z0-9]+/).filter((w) => w.length > 3));
@@ -121,37 +121,60 @@ export class MatchingEngine {
 
   private calculateAttributeScore(source: Report, target: Report): number {
     let score = 30; // base baseline
-    const aiA = source.ai;
-    const aiB = target.ai;
+    const brandA = source.brand || (source.ai?.brand !== "Unknown" ? source.ai?.brand : null);
+    const brandB = target.brand || (target.ai?.brand !== "Unknown" ? target.ai?.brand : null);
 
-    if (!aiA || !aiB) return score;
+    const colorA = source.color || (source.ai?.color !== "unspecified" ? source.ai?.color : null);
+    const colorB = target.color || (target.ai?.color !== "unspecified" ? target.ai?.color : null);
+
+    const modelA = source.model || source.ai?.model;
+    const modelB = target.model || target.ai?.model;
+
+    const materialA = source.material || source.ai?.material;
+    const materialB = target.material || target.ai?.material;
 
     // Brand matching
-    if (aiA.brand && aiB.brand && aiA.brand !== "Unknown" && aiB.brand !== "Unknown") {
-      if (aiA.brand.toLowerCase() === aiB.brand.toLowerCase()) {
+    if (brandA && brandB) {
+      if (brandA.toLowerCase() === brandB.toLowerCase()) {
         score += 35;
       } else {
         score -= 20;
       }
     }
 
-    // Color matching
-    if (aiA.color && aiB.color && aiA.color !== "unspecified" && aiB.color !== "unspecified") {
-      if (aiA.color.toLowerCase() === aiB.color.toLowerCase()) {
+    // Model matching
+    if (modelA && modelB) {
+      if (modelA.toLowerCase() === modelB.toLowerCase()) {
         score += 25;
+      } else if (modelA.toLowerCase().includes(modelB.toLowerCase()) || modelB.toLowerCase().includes(modelA.toLowerCase())) {
+        score += 15;
+      }
+    }
+
+    // Color matching
+    if (colorA && colorB) {
+      if (colorA.toLowerCase() === colorB.toLowerCase()) {
+        score += 20;
       } else if (
-        aiA.color.toLowerCase().includes(aiB.color.toLowerCase()) ||
-        aiB.color.toLowerCase().includes(aiA.color.toLowerCase())
+        colorA.toLowerCase().includes(colorB.toLowerCase()) ||
+        colorB.toLowerCase().includes(colorA.toLowerCase())
       ) {
+        score += 10;
+      }
+    }
+
+    // Material matching
+    if (materialA && materialB) {
+      if (materialA.toLowerCase() === materialB.toLowerCase()) {
         score += 15;
       }
     }
 
     // Object type matching
-    if (aiA.objectType && aiB.objectType) {
-      if (aiA.objectType.toLowerCase() === aiB.objectType.toLowerCase()) {
-        score += 20;
-      }
+    const objTypeA = source.ai?.objectType || source.title;
+    const objTypeB = target.ai?.objectType || target.title;
+    if (objTypeA && objTypeB && objTypeA.toLowerCase() === objTypeB.toLowerCase()) {
+      score += 15;
     }
 
     return Math.min(100, Math.max(0, score));
@@ -217,19 +240,19 @@ export class MatchingEngine {
   private generateExplanation(source: Report, target: Report, scores: MatchScores): string {
     const reasons: string[] = [];
 
-    if (scores.category >= 80) {
-      const objType = source.ai?.objectType || source.title || source.category;
-      reasons.push(`Both reports identify the item within the ${objType} category.`);
-    }
+    const brand = source.brand || (source.ai?.brand !== "Unknown" ? source.ai?.brand : null) || target.brand || (target.ai?.brand !== "Unknown" ? target.ai?.brand : null);
+    const color = source.color || (source.ai?.color !== "unspecified" ? source.ai?.color : null) || target.color || (target.ai?.color !== "unspecified" ? target.ai?.color : null);
+    const model = source.model || source.ai?.model || target.model || target.ai?.model;
+    const itemType = source.ai?.objectType || source.title || source.category;
 
-    const brand = source.ai?.brand !== "Unknown" ? source.ai?.brand : target.ai?.brand !== "Unknown" ? target.ai?.brand : null;
-    const color = source.ai?.color !== "unspecified" ? source.ai?.color : target.ai?.color !== "unspecified" ? target.ai?.color : null;
     if (brand && color) {
-      reasons.push(`Visual and attribute congruence with a ${color} ${brand} product.`);
+      reasons.push(`Both reports describe a ${color} ${brand}${model ? ` ${model}` : ""} ${itemType}.`);
     } else if (brand) {
       reasons.push(`Both reports reference ${brand} hardware.`);
     } else if (color) {
       reasons.push(`Both reports describe matching ${color} color profiles.`);
+    } else if (scores.category >= 80) {
+      reasons.push(`Both reports identify the item within the ${itemType} category.`);
     }
 
     if (scores.location >= 80) {

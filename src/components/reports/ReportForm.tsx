@@ -24,6 +24,39 @@ const CATEGORIES: { value: ItemCategory; label: string }[] = [
   { value: "other", label: "📦 OTHER MISCELLANEOUS" },
 ];
 
+const COLORS = [
+  "Black",
+  "White",
+  "Blue",
+  "Red",
+  "Green",
+  "Yellow",
+  "Brown",
+  "Grey",
+  "Silver",
+  "Gold",
+  "Purple",
+  "Pink",
+  "Orange",
+  "Multicolor",
+  "Transparent",
+  "Other",
+  "Unknown",
+];
+
+const MATERIALS = [
+  "Leather",
+  "Plastic",
+  "Metal",
+  "Fabric",
+  "Canvas",
+  "Rubber",
+  "Wood",
+  "Glass",
+  "Mixed",
+  "Other",
+];
+
 const CAMPUS_ZONES = [
   "Central Academic Quad",
   "Central Library & Study Commons",
@@ -46,6 +79,14 @@ export function ReportForm({ initialType }: ReportFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<ItemCategory>("electronics");
+  
+  // Structured manual attributes
+  const [brand, setBrand] = useState("");
+  const [model, setModel] = useState("");
+  const [color, setColor] = useState("Black");
+  const [material, setMaterial] = useState("Plastic");
+  const [distinctiveFeatures, setDistinctiveFeatures] = useState("");
+
   const [locationName, setLocationName] = useState("");
   const [selectedZone, setSelectedZone] = useState(CAMPUS_ZONES[0]);
   const [reportDate, setReportDate] = useState(new Date().toISOString().split("T")[0]);
@@ -79,7 +120,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
       setImageFile(file);
       setImageSizeFormatted((file.size / (1024 * 1024)).toFixed(2) + " MB");
       
-      // Convert to instant Base64 data URL for guaranteed local & persistence preview
+      // Convert to instant Base64 data URL for local & persistence preview
       const reader = new FileReader();
       reader.onload = () => {
         setImagePreview(reader.result as string);
@@ -134,6 +175,11 @@ export function ReportForm({ initialType }: ReportFormProps) {
         title: title.trim(),
         description: description.trim(),
         category,
+        brand: brand.trim() || undefined,
+        model: model.trim() || undefined,
+        color: color !== "Unknown" ? color : undefined,
+        material: material !== "Other" ? material : undefined,
+        distinctiveFeatures: distinctiveFeatures.trim() || undefined,
         imageUrl: uploadedImageUrl,
         location: {
           name: locationName.trim(),
@@ -160,7 +206,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
         throw new Error(data.error || "Failed to submit report");
       }
 
-      logger.info("Report created successfully", "ReportForm", { id: data.report.id });
+      logger.info("Report created successfully with structured attributes", "ReportForm", { id: data.report.id });
       router.push(`/reports/${data.report.id}`);
     } catch (err: any) {
       logger.error("Submission error", "ReportForm", err);
@@ -174,7 +220,7 @@ export function ReportForm({ initialType }: ReportFormProps) {
       isLost ? "border-t-[#FF6B6B]" : "border-t-[#FFD93D]"
     }`}>
       
-      {/* Issues 4, 5, 6, 7, 8 Fix: Render only the dedicated mode banner matching route identity */}
+      {/* Dedicated mode banner matching route identity */}
       <div className={`p-4 sm:p-5 border-b-6 border-black font-black text-xs sm:text-sm uppercase flex items-center justify-between gap-3 ${
         isLost ? "bg-[#FF6B6B] text-white" : "bg-[#FFD93D] text-black"
       }`}>
@@ -269,11 +315,11 @@ export function ReportForm({ initialType }: ReportFormProps) {
           </div>
         </div>
 
-        {/* SECTION 02: ITEM DETAILS */}
+        {/* SECTION 02: ITEM CORE DETAILS */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 border-b-2 border-black pb-1">
             <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-black">02</span>
-            <span className="text-xs font-black uppercase tracking-widest text-black">ITEM DETAILS</span>
+            <span className="text-xs font-black uppercase tracking-widest text-black">ITEM IDENTIFICATION</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -306,6 +352,69 @@ export function ReportForm({ initialType }: ReportFormProps) {
                   <option key={cat.value} value={cat.value} className="bg-white text-black">
                     {cat.label}
                   </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Structured Attributes (Brand, Model, Color, Material) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black uppercase tracking-wider text-black">
+                BRAND (OPTIONAL)
+              </label>
+              <input
+                type="text"
+                placeholder="E.G. SONY, APPLE, CASIO, NIKE"
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                disabled={submitting}
+                className="neo-input w-full px-3 py-2.5 text-xs font-black uppercase placeholder:text-black/40"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black uppercase tracking-wider text-black">
+                MODEL / PRODUCT NAME
+              </label>
+              <input
+                type="text"
+                placeholder="E.G. WF-1000XM4, G-SHOCK"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                disabled={submitting}
+                className="neo-input w-full px-3 py-2.5 text-xs font-black uppercase placeholder:text-black/40"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black uppercase tracking-wider text-black">
+                PRIMARY COLOR
+              </label>
+              <select
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                disabled={submitting}
+                className="neo-input w-full px-3 py-2.5 text-xs font-black uppercase bg-white text-black cursor-pointer"
+              >
+                {COLORS.map((c) => (
+                  <option key={c} value={c}>{c.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black uppercase tracking-wider text-black">
+                MATERIAL
+              </label>
+              <select
+                value={material}
+                onChange={(e) => setMaterial(e.target.value)}
+                disabled={submitting}
+                className="neo-input w-full px-3 py-2.5 text-xs font-black uppercase bg-white text-black cursor-pointer"
+              >
+                {MATERIALS.map((m) => (
+                  <option key={m} value={m}>{m.toUpperCase()}</option>
                 ))}
               </select>
             </div>
@@ -383,27 +492,44 @@ export function ReportForm({ initialType }: ReportFormProps) {
           </div>
         </div>
 
-        {/* SECTION 04: DESCRIPTION */}
-        <div className="space-y-2">
+        {/* SECTION 04: DESCRIPTION & DISTINCTIVE FEATURES */}
+        <div className="space-y-4">
           <div className="flex items-center gap-2 border-b-2 border-black pb-1">
             <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-black">04</span>
             <label className="text-xs font-black uppercase tracking-widest text-black">
               DISTINGUISHING FEATURES &amp; NOTES *
             </label>
           </div>
-          <textarea
-            required
-            rows={3}
-            placeholder={
-              isLost
-                ? "DESCRIBE SCRATCHES, STICKERS, ENGRAVINGS, CASE COLOR, OR BRAND MODEL..."
-                : "DESCRIBE WHERE ITEM WAS FOUND, CURRENT CONDITION, AND ANY IDENTIFYING MARKS..."
-            }
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={submitting}
-            className="neo-input w-full px-4 py-3 text-sm font-black uppercase placeholder:text-black/40"
-          />
+          
+          <div className="space-y-1.5">
+            <textarea
+              required
+              rows={3}
+              placeholder={
+                isLost
+                  ? "DESCRIBE WHERE YOU LOST IT, GENERAL SITUATION, AND SUMMARY..."
+                  : "DESCRIBE WHERE ITEM WAS FOUND AND CURRENT CUSTODY STATE..."
+              }
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={submitting}
+              className="neo-input w-full px-4 py-3 text-sm font-black uppercase placeholder:text-black/40"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-black uppercase tracking-wider text-black">
+              HIDDEN IDENTIFIERS / PRIVATE MARKS / UNIQUE SCRATCHES (USED FOR VERIFICATION)
+            </label>
+            <input
+              type="text"
+              placeholder="E.G. SCRATCH ON BOTTOM RIGHT, STICKER ON REAR, ENGRAVED INITIALS..."
+              value={distinctiveFeatures}
+              onChange={(e) => setDistinctiveFeatures(e.target.value)}
+              disabled={submitting}
+              className="neo-input w-full px-4 py-2.5 text-xs font-black uppercase placeholder:text-black/40"
+            />
+          </div>
         </div>
 
         {/* SECTION 05: SUBMISSION */}
