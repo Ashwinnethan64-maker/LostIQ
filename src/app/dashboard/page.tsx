@@ -4,18 +4,19 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { RouteGuard } from "@/lib/auth/RouteGuard";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { PlusCircle, Search, LayoutDashboard, ArrowRight, ShieldCheck, Inbox } from "lucide-react";
+import { PlusCircle, Search, LayoutDashboard, ArrowRight, ShieldCheck, Inbox, Loader2 } from "lucide-react";
 import { Report } from "@/types";
 import { getFirstName } from "@/lib/utils";
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchUserReports() {
       if (!user) return;
+      setLoading(true);
       try {
         const res = await fetch(`/api/reports?userId=${encodeURIComponent(user.id)}`, {
           cache: "no-store",
@@ -30,12 +31,16 @@ export default function DashboardPage() {
         setLoading(false);
       }
     }
-    fetchUserReports();
+
+    if (user) {
+      fetchUserReports();
+    }
   }, [user]);
 
   const lostCount = reports.filter((r) => r.reportType === "LOST").length;
   const foundCount = reports.filter((r) => r.reportType === "FOUND").length;
   const firstName = getFirstName(user);
+  const isOverallLoading = authLoading || loading;
 
   return (
     <RouteGuard>
@@ -87,24 +92,30 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 4 Bold Metric Blocks */}
+        {/* 4 Bold Metric Blocks with Loading Skeleton Protection (No Flash of Zero) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           
           <div className="neo-card p-5 border-4 border-black bg-[#FF6B6B] text-white">
             <div className="text-xs font-black uppercase tracking-widest text-white/90">MY LOST REPORTS</div>
-            <div className="text-4xl sm:text-5xl font-black mt-2">{lostCount}</div>
+            <div className="text-4xl sm:text-5xl font-black mt-2">
+              {isOverallLoading ? <Loader2 className="h-8 w-8 animate-spin my-1" /> : lostCount}
+            </div>
             <div className="text-[10px] font-bold uppercase mt-1 text-white/90">ACTIVE MISSING TICKETS</div>
           </div>
 
           <div className="neo-card p-5 border-4 border-black bg-[#FFD93D] text-black">
             <div className="text-xs font-black uppercase tracking-widest text-black/80">MY FOUND REPORTS</div>
-            <div className="text-4xl sm:text-5xl font-black mt-2">{foundCount}</div>
+            <div className="text-4xl sm:text-5xl font-black mt-2">
+              {isOverallLoading ? <Loader2 className="h-8 w-8 animate-spin my-1" /> : foundCount}
+            </div>
             <div className="text-[10px] font-bold uppercase mt-1 text-black/80">COMMUNITY TURN-INS</div>
           </div>
 
           <div className="neo-card p-5 border-4 border-black bg-[#C4B5FD] text-black">
             <div className="text-xs font-black uppercase tracking-widest text-black/80">TOTAL SUBMISSIONS</div>
-            <div className="text-4xl sm:text-5xl font-black mt-2">{reports.length}</div>
+            <div className="text-4xl sm:text-5xl font-black mt-2">
+              {isOverallLoading ? <Loader2 className="h-8 w-8 animate-spin my-1" /> : reports.length}
+            </div>
             <div className="text-[10px] font-bold uppercase mt-1 text-black/80">FILED UNDER YOUR ACCOUNT</div>
           </div>
 
@@ -120,17 +131,19 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between border-b-4 border-black pb-2">
             <h2 className="text-2xl font-black uppercase tracking-tight text-black">
-              YOUR ACTIVE SUBMISSIONS ({reports.length})
+              YOUR ACTIVE SUBMISSIONS {isOverallLoading ? "" : `(${reports.length})`}
             </h2>
             <span className="text-xs font-bold uppercase tracking-widest text-black/70">
               CLICK TO VIEW MATCH CONFIDENCE
             </span>
           </div>
 
-          {loading ? (
-            <div className="border-4 border-black bg-white p-8 text-center space-y-3 animate-pulse shadow-neo">
-              <div className="h-6 bg-[#E2E8F0] w-1/3 mx-auto border-2 border-black" />
-              <div className="h-4 bg-[#E2E8F0] w-1/4 mx-auto border-2 border-black" />
+          {isOverallLoading ? (
+            <div className="border-4 border-black bg-white p-12 text-center space-y-4 shadow-neo">
+              <Loader2 className="h-8 w-8 animate-spin text-black mx-auto" />
+              <div className="font-black text-sm uppercase tracking-wider text-black">
+                LOADING YOUR LOSTIQ SUBMISSIONS...
+              </div>
             </div>
           ) : reports.length === 0 ? (
             <div className="border-6 border-black bg-white p-10 sm:p-12 text-center space-y-4 shadow-neo-lg">
