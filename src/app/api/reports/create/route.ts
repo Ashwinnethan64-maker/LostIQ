@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createReportInDb } from "@/lib/supabase/repository";
 import { aiAnalysisService } from "@/lib/ai/ai-analysis.service";
 import { verifyServerSession } from "@/lib/auth/server-auth";
-import { Report } from "@/types";
+import { Report, AIRawAttributes } from "@/types";
 import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const reportId = body.id || `rep-${Date.now()}`;
 
     // Step 1: Execute Gemini Multimodal Analysis with Graceful Fallback
-    let aiAttributes = null;
+    let aiAttributes: AIRawAttributes | null = null;
     try {
       aiAttributes = await aiAnalysisService.analyzeItem({
         title: body.title,
@@ -38,6 +38,9 @@ export async function POST(req: NextRequest) {
         summary: body.description.slice(0, 120),
         category: body.category || "other",
         objectType: body.title,
+        brand: "Unknown",
+        color: "unspecified",
+        attributes: [body.category || "other"],
         keywords: [body.title.toLowerCase(), body.category || "item"],
         extractedAt: new Date().toISOString(),
       };
