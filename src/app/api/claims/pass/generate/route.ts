@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
     const tokenRecord: RecoveryToken = {
-      id: `tok-${Date.now()}`,
+      id: crypto.randomUUID(),
       claimId: claim.id,
       token,
       tokenHash: hash,

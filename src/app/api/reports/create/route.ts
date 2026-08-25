@@ -5,6 +5,8 @@ import { verifyServerSession } from "@/lib/auth/server-auth";
 import { Report, AIRawAttributes } from "@/types";
 import { logger } from "@/lib/logger";
 
+import crypto from "crypto";
+
 export async function POST(req: NextRequest) {
   try {
     // Verify server session
@@ -19,9 +21,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
-    // Always enforce verified session UID
+    // Always enforce verified session UID and generate canonical UUID
     const effectiveUserId = session.uid;
-    const reportId = body.id || `rep-${Date.now()}`;
+    const reportId = body.id && typeof body.id === "string" && body.id.trim().length > 0 && !body.id.startsWith("rep-") ? body.id.trim() : crypto.randomUUID();
 
     // Extract manual structured user inputs
     const manualBrand = body.brand && body.brand.trim() && body.brand !== "Unknown" && body.brand !== "No brand" ? body.brand.trim() : null;

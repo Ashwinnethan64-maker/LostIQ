@@ -79,7 +79,7 @@ export default function DashboardPage() {
 
   const lostCount = reports.filter((r) => r.reportType === "LOST").length;
   const foundCount = reports.filter((r) => r.reportType === "FOUND").length;
-  const recoveredCount = reports.filter((r) => r.status === "RECOVERED").length;
+  const recoveredCount = reports.filter((r) => r.status === "RECOVERED" || r.status === "RETURNED" || r.status === "RESOLVED").length;
   const pendingRecoveryCount = claims.filter((c) => c.status !== "COMPLETED" && c.status !== "CANCELLED").length;
 
   const firstName = getFirstName(user);
@@ -308,9 +308,9 @@ export default function DashboardPage() {
                         <span className="text-xs font-bold uppercase text-black/70">
                           {rep.location?.name} • {new Date(rep.reportedAt).toLocaleDateString()}
                         </span>
-                        {rep.status === "RECOVERED" && (
+                        {(rep.status === "RECOVERED" || rep.status === "RETURNED" || rep.status === "RESOLVED") && (
                           <span className="neo-sticker bg-black text-white text-[10px]">
-                            ✓ RECOVERED
+                            ✓ {rep.status}
                           </span>
                         )}
                       </div>

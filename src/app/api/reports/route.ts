@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getReportsFromDb } from "@/lib/supabase/repository";
-import { ReportType, ReportStatus } from "@/types";
+import { getReportsFromDb, getReportsForUser } from "@/lib/supabase/repository";
+import { ReportType, ReportStatus, Report } from "@/types";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -15,14 +15,20 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search") || searchParams.get("q");
     const userId = searchParams.get("userId");
 
-    const reports = await getReportsFromDb({
-      reportType: (reportType && reportType !== ("ALL" as any)) ? reportType : undefined,
-      category: (category && category !== "all") ? category : undefined,
-      status: status || undefined,
-      search: search || undefined,
-      userId: userId || undefined,
-      limitCount: 50,
-    });
+    let reports: Report[] = [];
+
+    if (userId && !reportType && !category && !status && !search) {
+      reports = await getReportsForUser(userId);
+    } else {
+      reports = await getReportsFromDb({
+        reportType: (reportType && reportType !== ("ALL" as any)) ? reportType : undefined,
+        category: (category && category !== "all") ? category : undefined,
+        status: status || undefined,
+        search: search || undefined,
+        userId: userId || undefined,
+        limitCount: 50,
+      });
+    }
 
     // Zero-knowledge privacy invariant: Strip private ownership proof from list queries
     const sanitizedReports = reports.map((r) => ({

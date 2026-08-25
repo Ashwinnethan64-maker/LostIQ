@@ -296,11 +296,11 @@ describe("LostIQ Verified Recovery & Safe Handover System", () => {
       expect(body.receipt.receiptId).toContain("LIQ-");
       expect(body.receipt.status).toBe("RECOVERED");
 
-      // Verify reports in DB are marked RECOVERED
+      // Verify reports in DB are marked RECOVERED (lost) and RETURNED (found)
       const updatedLost = await getReportByIdFromDb(lostReportId);
       const updatedFound = await getReportByIdFromDb(foundReportId);
       expect(updatedLost?.status).toBe("RECOVERED");
-      expect(updatedFound?.status).toBe("RECOVERED");
+      expect(updatedFound?.status).toBe("RETURNED");
     });
   });
 });

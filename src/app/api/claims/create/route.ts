@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { verifyServerSession } from "@/lib/auth/server-auth";
 import {
   getReportByIdFromDb,
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     // Step 4: Validate proof details
     const verificationResult = verifyOwnershipProof(expectedProof, body.proofDetails);
-    const claimId = `claim-${Date.now()}`;
+    const claimId = crypto.randomUUID();
 
     // Debug logging for verified recovery traceability
     logger.info("Evaluating ownership claim proof", "ClaimsAPI", {

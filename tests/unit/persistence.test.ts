@@ -83,4 +83,49 @@ describe("User Identity Mapping & Persistence Architecture", () => {
     expect(report?.userId).toBe(userA.id);
     expect(report?.brand).toBe("Casio");
   });
+
+  it("queries reports directly via getReportsForUser authoritative function", async () => {
+    const userAReports = await getReportsFromDb({ userId: userA.id });
+    expect(userAReports.length).toBeGreaterThan(0);
+    expect(userAReports.every((r) => r.userId.toLowerCase() === userA.id.toLowerCase())).toBe(true);
+  });
+
+  it("generates a canonical UUID when report ID is omitted", async () => {
+    const newReport = await createReportInDb({
+      reportType: "LOST",
+      userId: userA.id,
+      title: "Silver MacBook Pro",
+      description: "Left in physics auditorium",
+      category: "electronics",
+      location: { name: "Auditorium A", zone: "Science & Engineering Complex" },
+    });
+
+    expect(newReport.id).toBeDefined();
+    expect(typeof newReport.id).toBe("string");
+    // Standard UUID pattern (36 chars with hyphens)
+    expect(newReport.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+
+    // Verify it is retrievable by its exact UUID
+    const fetched = await getReportByIdFromDb(newReport.id);
+    expect(fetched).not.toBeNull();
+    expect(fetched?.id).toBe(newReport.id);
+    expect(fetched?.title).toBe("Silver MacBook Pro");
+  });
+
+  it("preserves case detail access permanently even when status is RECOVERED or RETURNED", async () => {
+    const recoveredReport = await createReportInDb({
+      reportType: "LOST",
+      userId: userA.id,
+      title: "Blue Stainless Tumbler",
+      description: "Hydro flask with stickers",
+      category: "bottles_tumblers",
+      location: { name: "Gym Locker", zone: "Athletics & Recreation Center" },
+      status: "RECOVERED",
+    });
+
+    const fetched = await getReportByIdFromDb(recoveredReport.id);
+    expect(fetched).not.toBeNull();
+    expect(fetched?.status).toBe("RECOVERED");
+    expect(fetched?.title).toBe("Blue Stainless Tumbler");
+  });
 });

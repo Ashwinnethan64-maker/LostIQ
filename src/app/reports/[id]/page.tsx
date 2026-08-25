@@ -100,10 +100,16 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
             <div className="absolute top-3 left-3">
               <span
                 className={`neo-sticker ${
-                  isLost ? "bg-[#FF6B6B] text-white" : "bg-[#FFD93D] text-black"
+                  report.status === "RECOVERED" || report.status === "RETURNED"
+                    ? "bg-black text-white"
+                    : isLost
+                    ? "bg-[#FF6B6B] text-white"
+                    : "bg-[#FFD93D] text-black"
                 } rotate-[-2deg]`}
               >
-                {report.reportType} VALUABLE
+                {report.status === "RECOVERED" || report.status === "RETURNED"
+                  ? `✓ ${report.status}`
+                  : `${report.reportType} VALUABLE`}
               </span>
             </div>
           </div>

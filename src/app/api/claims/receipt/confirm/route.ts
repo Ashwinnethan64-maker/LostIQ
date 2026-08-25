@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
       ownerReceivedAt: nowIso,
     });
 
-    // 2. Update both LOST and FOUND reports to RECOVERED atomically
-    await updateReportStatusInDb(claim.reportId, "RECOVERED");
+    // 2. Update both LOST and FOUND reports atomically (Preserves permanent case history)
+    await updateReportStatusInDb(claim.reportId, "RETURNED");
     if (claim.lostReportId) {
       await updateReportStatusInDb(claim.lostReportId, "RECOVERED");
     }

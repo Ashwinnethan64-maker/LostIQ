@@ -152,15 +152,18 @@ export function ReportForm({ initialType }: ReportFormProps) {
 
     try {
       let uploadedImageUrl: string | null = null;
-      const tempReportId = `rep-${Date.now()}`;
-      const effectiveUserId = user?.id || "demo-student-101";
+      const effectiveUserId = user?.id;
+      if (!effectiveUserId) {
+        throw new Error("You must be signed in to submit a report.");
+      }
 
       if (imageFile) {
         setSubmissionStage("OPTIMIZING & UPLOADING PHOTO...");
+        const uploadUid = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `img-${Date.now()}`;
         const optimizedBlob = await optimizeImageClientSide(imageFile);
         uploadedImageUrl = await uploadReportImage(
           effectiveUserId,
-          tempReportId,
+          uploadUid,
           optimizedBlob,
           imageFile.name
         );
@@ -171,7 +174,6 @@ export function ReportForm({ initialType }: ReportFormProps) {
       setSubmissionStage("STORING REPORT & INITIALIZING AI MATCHING...");
 
       const payload = {
-        id: tempReportId,
         reportType,
         userId: effectiveUserId,
         title: title.trim(),
@@ -205,11 +207,11 @@ export function ReportForm({ initialType }: ReportFormProps) {
 
       const data = await res.json();
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to submit report");
+      if (!res.ok || !data.success || !data.report?.id) {
+        throw new Error(data.error || "Failed to submit report to database");
       }
 
-      logger.info("Report created successfully with structured attributes & private proof", "ReportForm", { id: data.report.id });
+      logger.info("Report created successfully with canonical database UUID", "ReportForm", { id: data.report.id });
       router.push(`/reports/${data.report.id}`);
     } catch (err: any) {
       logger.error("Submission error", "ReportForm", err);

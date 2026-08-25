@@ -1,6 +1,6 @@
 export type ReportType = "LOST" | "FOUND";
 
-export type ReportStatus = "OPEN" | "MATCHED" | "CLAIMED" | "RESOLVED" | "RECOVERED" | "CLOSED";
+export type ReportStatus = "OPEN" | "MATCHED" | "CLAIMED" | "RESOLVED" | "RECOVERED" | "RETURNED" | "CLOSED";
 
 export type ItemCategory =
   | "electronics"
