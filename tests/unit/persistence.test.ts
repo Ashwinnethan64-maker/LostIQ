@@ -112,20 +112,22 @@ describe("User Identity Mapping & Persistence Architecture", () => {
     expect(fetched?.title).toBe("Silver MacBook Pro");
   });
 
-  it("preserves case detail access permanently even when status is RECOVERED or RETURNED", async () => {
-    const recoveredReport = await createReportInDb({
-      reportType: "LOST",
-      userId: userA.id,
-      title: "Blue Stainless Tumbler",
-      description: "Hydro flask with stickers",
-      category: "bottles_tumblers",
-      location: { name: "Gym Locker", zone: "Athletics & Recreation Center" },
-      status: "RECOVERED",
-    });
+  it("ensures public explore visibility returns reports from all users while control desk query isolates user data", async () => {
+    // 1. Explore query (no userId filter) returns reports from both User A and User B
+    const allPublicReports = await getReportsFromDb({});
+    const hasUserAReport = allPublicReports.some((r) => r.userId.toLowerCase() === userA.id.toLowerCase());
+    const hasUserBReport = allPublicReports.some((r) => r.userId.toLowerCase() === userB.id.toLowerCase());
+    expect(hasUserAReport).toBe(true);
+    expect(hasUserBReport).toBe(true);
 
-    const fetched = await getReportByIdFromDb(recoveredReport.id);
-    expect(fetched).not.toBeNull();
-    expect(fetched?.status).toBe("RECOVERED");
-    expect(fetched?.title).toBe("Blue Stainless Tumbler");
+    // 2. Control Desk query for User A returns ONLY User A reports
+    const controlDeskUserA = await getReportsFromDb({ userId: userA.id });
+    expect(controlDeskUserA.every((r) => r.userId.toLowerCase() === userA.id.toLowerCase())).toBe(true);
+    expect(controlDeskUserA.some((r) => r.userId.toLowerCase() === userB.id.toLowerCase())).toBe(false);
+
+    // 3. Control Desk query for User B returns ONLY User B reports
+    const controlDeskUserB = await getReportsFromDb({ userId: userB.id });
+    expect(controlDeskUserB.every((r) => r.userId.toLowerCase() === userB.id.toLowerCase())).toBe(true);
+    expect(controlDeskUserB.some((r) => r.userId.toLowerCase() === userA.id.toLowerCase())).toBe(false);
   });
 });

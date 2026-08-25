@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getReportByIdFromDb } from "@/lib/supabase/repository";
+import { getReportByIdFromDb, getClaimsFromDb, getRecoveryEventsForClaim } from "@/lib/supabase/repository";
 import { verifyServerSession } from "@/lib/auth/server-auth";
 import { logger } from "@/lib/logger";
 
@@ -23,7 +23,18 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       privateOwnershipProof: isOwner ? report.privateOwnershipProof : undefined,
     };
 
-    return NextResponse.json({ success: true, report: safeReport });
+    // Load related recovery claim & audit trail if present
+    const [claimForFound, claimForLost] = await Promise.all([
+      getClaimsFromDb({ reportId: report.id }),
+      getClaimsFromDb({ lostReportId: report.id }),
+    ]);
+    const activeClaim = [...claimForFound, ...claimForLost].find((c) => c.status !== "CANCELLED") || null;
+    let events: any[] = [];
+    if (activeClaim) {
+      events = await getRecoveryEventsForClaim(activeClaim.id);
+    }
+
+    return NextResponse.json({ success: true, report: safeReport, claim: activeClaim, events });
   } catch (err: any) {
     logger.error("Error fetching report details", "ReportDetailsAPI", err);
     return NextResponse.json({ success: false, error: err.message || "Failed to fetch report" }, { status: 500 });

@@ -4,8 +4,8 @@
     "email": "user.a@campus.edu",
     "displayName": "User Alpha",
     "role": "user",
-    "createdAt": "2026-08-25T14:57:02.751Z",
-    "updatedAt": "2026-08-25T14:57:02.764Z",
+    "createdAt": "2026-08-25T15:11:25.664Z",
+    "updatedAt": "2026-08-25T15:11:25.675Z",
     "photoURL": null
   },
   {
@@ -13,8 +13,8 @@
     "email": "user.b@campus.edu",
     "displayName": "User Beta",
     "role": "user",
-    "createdAt": "2026-08-25T14:57:02.752Z",
-    "updatedAt": "2026-08-25T14:57:02.771Z",
+    "createdAt": "2026-08-25T15:11:25.665Z",
+    "updatedAt": "2026-08-25T15:11:25.681Z",
     "photoURL": null
   }
 ]

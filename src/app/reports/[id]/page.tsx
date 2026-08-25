@@ -9,9 +9,11 @@ import { ArrowLeft, MapPin, Sparkles, ShieldCheck, ArrowRight, UserCheck, Clock 
 import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function ReportDetailPage({ params }: { params: { id: string } }) {
-  const { user } = useAuth();
+  const { user, getFreshToken } = useAuth();
   const [report, setReport] = useState<Report | null>(null);
   const [matches, setMatches] = useState<MatchCandidate[]>([]);
+  const [linkedClaim, setLinkedClaim] = useState<any>(null);
+  const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
   const [claimTarget, setClaimTarget] = useState<{ id: string; lostId?: string; title: string } | null>(null);
@@ -19,13 +21,19 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
   useEffect(() => {
     async function fetchReportAndMatches() {
       try {
-        const res = await fetch(`/api/reports/${params.id}`);
+        const token = await getFreshToken();
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(`/api/reports/${params.id}`, { headers, cache: "no-store" });
         const data = await res.json();
         if (data.success) {
           setReport(data.report);
+          setLinkedClaim(data.claim || null);
+          setEvents(data.events || []);
 
           // Fetch matches
-          const matchRes = await fetch(`/api/reports/${params.id}/matches`);
+          const matchRes = await fetch(`/api/reports/${params.id}/matches`, { headers, cache: "no-store" });
           const matchData = await matchRes.json();
           if (matchData.success) {
             setMatches(matchData.matches || []);
@@ -38,7 +46,7 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
       }
     }
     fetchReportAndMatches();
-  }, [params.id]);
+  }, [params.id, getFreshToken]);
 
   if (loading) {
     return (
@@ -161,6 +169,27 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
               DATE: {new Date(report.reportedAt).toLocaleDateString()} • STATUS: {report.status}
             </div>
           </div>
+
+          {/* Linked Recovery Workflow Banner */}
+          {linkedClaim && (
+            <div className="border-4 border-black bg-[#C4B5FD] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-neo-sm">
+              <div className="space-y-0.5">
+                <div className="font-black text-xs uppercase text-black flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>RECOVERY CASE LINKED (STATUS: {linkedClaim.status})</span>
+                </div>
+                <p className="text-[11px] font-bold text-black/80">
+                  Verified recovery pass and safe handover lifecycle is active for this case.
+                </p>
+              </div>
+              <Link
+                href={`/recovery/${linkedClaim.id}`}
+                className="neo-button px-4 py-2 text-xs bg-black text-white border-2 border-black hover:bg-[#FF6B6B] whitespace-nowrap font-black"
+              >
+                OPEN RECOVERY HUB →
+              </Link>
+            </div>
+          )}
 
           {/* Detailed Notes */}
           <div className="space-y-1">
