@@ -122,9 +122,9 @@ function LoginForm() {
 
       {/* Real Security Enforcement Banner */}
       <div className="border-3 border-black bg-[#FFFDF5] p-3 text-[11px] font-black uppercase text-center space-y-1">
-        <div className="text-black">⚡ REAL-TIME IDENTITY VERIFICATION</div>
+        <div className="text-black">🔒 SECURE CAMPUS AUTHENTICATION</div>
         <div className="text-black/60 text-[10px]">
-          SESSIONS ARE VALIDATED SERVER-SIDE WITH GOOGLE &amp; SUPABASE POSTGRESQL
+          END-TO-END ENCRYPTED LOGIN &bull; VERIFIED STUDENT NETWORK
         </div>
       </div>
 
